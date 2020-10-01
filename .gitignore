@@ -1,0 +1,11 @@
+#settings
+.idea
+*/__pycache__
+*/*/__pycache__
+
+#test result
+.coverage
+xunit-reports
+coverage-reports
+.pytest_cache
+db.sqlite3
