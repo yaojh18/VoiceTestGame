@@ -25,7 +25,8 @@ SECRET_KEY = '81dnpi#arf&*$3gk70*z!xu=p&@y*wq0j9h#m+vja(7x=bl7x('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost',
+                 'voicetestgame-dijkstra.app.secoder.net']
 
 
 # Application definition
