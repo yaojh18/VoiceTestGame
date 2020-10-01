@@ -6,7 +6,3 @@ pytest-django==3.10.0
 
 pylint==2.6.0
 pylint-django==2.3.0
-
-
-taro==3.0.11
-eslint==7.10.0

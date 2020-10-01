@@ -16,17 +16,20 @@ build:
 
 # Job template for test stage
 .test:
-  image: nikolaik/python-nodejs:python3.8-nodejs12
+  #image: nikolaik/python-nodejs:python3.8-nodejs12
+  #这里需要一个高级的集成镜像，这里只是用python做测试；如果没有的话我们就自己打包到dockerhub，前端快点确定框架！
+  image: python:3.8.5
   stage: test
 
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - WeApp/node_modules/
+  #cache:
+    #key: ${CI_COMMIT_REF_SLUG}
+    #paths:
+    #  - frontend/node_modules/
 
   before_script:
     - pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements_dev.txt
-    #- cd WeApp/
+    #前端改你的依赖库，最后回到根目录，命令行格式，如果用的npm包管理就按照这个改就行了
+    #- cd frontend/
     #- npm config set registry https://registry.npm.taobao.org
     #- npm install
     #- cd ..
@@ -38,11 +41,11 @@ unit-test:
     - BACKEND_RET=$?
     - coverage xml -o coverage-reports/coverage.xml
     - coverage report
-    #- cd WeApp/
+    #- cd frontend/ 前端的单元测试，python用的是coverage包，前段我不懂
     #- npm test
     #- FRONTEND_RET=$?
     #- if [ $FRONTEND_RET \> 0 ]; then exit $FRONTEND_RET; fi;
-    - exit $BACKEND_RET
+    #- exit $BACKEND_RET
   after_script:
     - SUFFIX=$RANDOM
     - curl "http://10.0.0.11/sonar-scanner.tar.gz" -s -o "/tmp/sonar-$SUFFIX.tar.gz"
@@ -51,20 +54,20 @@ unit-test:
 
 style-test:
   extends: .test
-  allow_failure: true
+  # allow_failure: true
   script:
     - pylint --load-plugins=pylint_django app personnel
     - BACKEND_RET=$?
-    #- cd WeApp/
+    #前端的风格检测代码在这里写，我依然不懂
+    #- cd frontend/
     #- npm run lint
     #- FRONTEND_RET=$?
     #- if [ $FRONTEND_RET \> 0 ]; then exit $FRONTEND_RET; fi;
-    - exit $BACKEND_RET
+    #- exit $BACKEND_RET
 
 deploy:
   stage: deploy
   script:
     - deployer dyno replace $CI_PROJECT_NAME "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" "$REGISTRY_USER" "$REGISTRY_PWD"
-  #only:
-  #  - master
+
 
