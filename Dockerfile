@@ -26,4 +26,4 @@ COPY . $HOME
 EXPOSE 80
 
 ENV PYTHONUNBUFFERED=true
-CMD ["/bin/sh", "config/run.sh"]
+CMD ["/bin/sh", "/opt/app/config/run.sh"]
