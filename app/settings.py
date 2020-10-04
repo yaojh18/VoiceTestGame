@@ -79,7 +79,6 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 
-
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -118,4 +117,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 # pylint: disable=C0413, W0611
-from config.local_settings import DATABASES
+# from config.local_settings import DATABASES
