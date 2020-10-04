@@ -22,10 +22,10 @@ export default class Index extends Component {
 
   render () {
     return (
-      <View className="frame">
+      <View className='frame'>
         <Button
-          className="button"
-          open-type="getUserInfo"
+          className='button'
+          open-type='getUserInfo'
           onGetUserInfo={this.DeliverUserInfo.bind(this)}
         >
           开始游戏

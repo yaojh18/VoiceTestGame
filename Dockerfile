@@ -10,7 +10,6 @@ COPY WeApp/package.json $FRONTEND
 RUN npm install 
 
 COPY WeApp $FRONTEND
-RUN npm run build:weapp
 
 FROM python:3.8.5
 

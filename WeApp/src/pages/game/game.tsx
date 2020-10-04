@@ -17,7 +17,7 @@ export default class Game extends Component {
 
   render () {
     return (
-      <View className="frame">
+      <View className='frame'>
         This is the game page.
       </View>
     )
