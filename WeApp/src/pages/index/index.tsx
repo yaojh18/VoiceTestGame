@@ -15,8 +15,7 @@ export default class Index extends Component {
 
   componentDidHide () { }
 
-  DeliverUserInfo (e) {
-    console.log(e.userInfo);
+  DeliverUserInfo () {
     Taro.switchTab({url:"../game/game"});
   }
 
