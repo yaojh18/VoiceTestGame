@@ -1,5 +1,11 @@
+"""
+TODO
+"""
 from django.apps import AppConfig
 
 
 class MediaAPIConfig(AppConfig):
-    name = 'mediaAPI'
+    """
+    TODO
+    """
+    name = 'media'

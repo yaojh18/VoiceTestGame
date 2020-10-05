@@ -53,7 +53,7 @@ style-test:
   extends: .test
   allow_failure: true
   script:
-    - pylint --load-plugins=pylint_django app personnel
+    - pylint --load-plugins=pylint_django app personnel media
     - BACKEND_RET=$?
     - cd WeApp/
     - npm run lint
@@ -65,6 +65,6 @@ deploy:
   stage: deploy
   script:
     - deployer dyno replace $CI_PROJECT_NAME "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" "$REGISTRY_USER" "$REGISTRY_PWD"
-  #only:
-  #  - master
+  only:
+    - dev
 
