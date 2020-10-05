@@ -2,8 +2,6 @@
 .idea
 */__pycache__
 */*/__pycache__
-config/database_settings.py
-
 
 #test result
 .coverage
