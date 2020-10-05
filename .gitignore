@@ -14,5 +14,4 @@ db.sqlite3
 mediaAPI/media/*
 
 #migrations
-*/migrations/!__init__.py
-*/migrations/*
+*/migrations

@@ -2,7 +2,7 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': os.path.join('E:\VoiceTest Game', 'db.sqlite3'),
+        'NAME': os.path.join('E:\Voice Test Game', 'db.sqlite3'),
     }
 }
 '''DATABASES = {
