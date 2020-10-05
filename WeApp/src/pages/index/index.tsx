@@ -15,17 +15,16 @@ export default class Index extends Component {
 
   componentDidHide () { }
 
-  DeliverUserInfo (e) {
-    console.log(e.userInfo);
+  DeliverUserInfo () {
     Taro.switchTab({url:"../game/game"});
   }
 
   render () {
     return (
-      <View className="frame">
+      <View className='frame'>
         <Button
-          className="button"
-          open-type="getUserInfo"
+          className='button'
+          open-type='getUserInfo'
           onGetUserInfo={this.DeliverUserInfo.bind(this)}
         >
           开始游戏

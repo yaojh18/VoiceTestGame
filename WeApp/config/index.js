@@ -1,6 +1,6 @@
 const config = {
   projectName: 'WeApp',
-  date: '2020-9-29',
+  date: '2020-10-3',
   designWidth: 750,
   deviceRatio: {
     640: 2.34 / 2,

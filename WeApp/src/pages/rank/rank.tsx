@@ -17,7 +17,7 @@ export default class Rank extends Component {
 
   render () {
     return (
-      <View className="frame">
+      <View className='frame'>
         This is the rank page.
       </View>
     )

@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist/",
   "projectname": "WeApp",
   "description": "配音大师微信小程序",
-  "appid": "touristappid",
+  "appid": "wxcec8955125bd6732",
   "setting": {
     "urlCheck": true,
     "es6": false,
