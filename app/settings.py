@@ -14,7 +14,8 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediaAPI/media")
+# MEDIA_URL = 'media/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'personnel.apps.PersonnelConfig',
     'rest_framework',
+    'mediaAPI.apps.MediaAPIConfig'
 ]
 
 MIDDLEWARE = [
@@ -76,7 +78,6 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
 
 
 # Password validation
@@ -117,4 +118,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 # pylint: disable=C0413, W0611
-from config.local_settings import DATABASES
+# from config.local_settings import DATABASES
