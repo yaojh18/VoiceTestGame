@@ -117,5 +117,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-# pylint: disable=C0413, W0611
+# pylint: disable=C0413, W0611, E0401
 from config.database_settings import DATABASES
