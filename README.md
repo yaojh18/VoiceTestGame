@@ -76,3 +76,9 @@
 - url: api/client/search
 - request: {user(所属用户), media_id(关卡id), query_type(查找条件)}
 - response: 数据内容
+
+# 2020.10.6 姚季涵
+新增代码规范：
++ 后端两位同学需要在完成数据库表结构的修改之后务必运行 python manage.py makemigrations，前端同学请不要运行这条指令，
+如果有不小心运行了，请注意删除生成的migrations文件。后端同学不能修改对方的数据库表结构。
++ 所有同学都可以使用python manage.py migrate来生成本地数据库进行测试。
