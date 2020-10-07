@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
 <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.css">
 </head>
 <body>
 <style>
@@ -132,8 +133,8 @@ html::-webkit-scrollbar {
 		</ul>
 	
     </li>
-      <li><a href="#"><span class="glyphicon glyphicon-user"></span> 注册</a></li>
-      <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> 登录</a></li>
+      <li><a href="/register"><span class="glyphicon glyphicon-user"></span> 注册</a></li>
+      <li><a href="/login"><span class="glyphicon glyphicon-log-in"></span> 登录</a></li>
     </ul>
   </div>
 </div>
@@ -279,98 +280,71 @@ html::-webkit-scrollbar {
 </body>
 <footer class="container-fluid foot-wrap col-xs-12 col-sm-12 col-md-12 col-lg-12">
     <!--采用container，使得页尾内容居中 -->
-        <div class="container">
+        <div class="text-muted text-center" class="container">
             <div class="row">
-                <div class="row-content col-lg-2 col-sm-4 col-xs-6">
-                    <h3>Subscribe</h3>
+                <div class="text-muted row-content col-lg-4 col-sm-4 col-xs-6">
+                    <h3><a href="#">关于我们</a></h3>
                     <ul>
-                        <li><a href="#">Newsletter</a></li>
-                        <li><a href="#">RSS feed</a></li>
-                        <li><a href="#">RSS to Email</a></li>
-                        <li><a href="#">Product Hunt</a></li>
-                        <li><a href="#">Twitter</a></li>
-                        <li><a href="#">Facebook</a></li>
-                        <li><a href="#">Pinterest</a></li>
-                        <li><a href="#">Google+</a></li>
+                        <li><a href="#">Placeholder</a></li>
+                        <li><a href="#">Placeholder</a></li>
                     </ul>
                 </div>
-                <div class="row-content col-lg-2 col-sm-4 col-xs-6">
-                    <h3>BROWSE</h3>
+                <div class="text-muted row-content col-lg-4 col-sm-4 col-xs-6">
+                    <h3><a href="#">登录相关</a></h3>
                     <ul>
-                        <li><a href="#">Home</a></li>
-                        <li><a href="#">Gallery</a></li>
-                        <li><a href="#">Templates</a></li>
-                        <li><a href="#">Resources</a></li>
-                        <li><a href="#">OPL Themes</a></li>
+                        <li><a href="/">登出</a></li>
+                        <li><a href="/register">注册</a></li>
+                        <li><a href="/login">登录</a></li>
                     </ul>
                 </div>
-                <div class="row-content col-lg-2 col-sm-4 col-xs-6">
-                    <h3>INFORMATION</h3>
+                <div class="text-muted row-content col-lg-4 col-sm-4 col-xs-6">
+                    <h3><a href="#">数据处理</a></h3>
                     <ul>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Why One Page?</a></li>
-                        <li><a href="#">OPL Blog</a></li>
-                        <li><a href="#">Product Hunt</a></li>
-                        <li><a href="#">Advertise</a></li>
-                        <li><a href="#">Submit</a></li>
-                        <li><a href="#">Award Ribbons</a></li>
-                        <li><a href="#">Roadmap</a></li>
+                        <li><a href="#">Placeholder</a></li>
+                        <li><a href="#">Placeholder</a></li>
                     </ul>
                 </div>
 
-                <div class="row-content col-lg-2 col-sm-4 col-xs-6">
-                    <h3>RESOURCES</h3>
-                    <ul>
-                        <li><a href="#">Browse All</a></li>
-                    </ul>
+                <!--<div class="row-content col-lg-2 col-sm-4 col-xs-6">
+                    
 
                 </div>
                 <div class="row-content col-lg-2 col-sm-4 col-xs-6">
-                    <h3>TRENDING</h3>
-                    <ul>
-                        <li><a href="#">Big Typography</a></li>
-                    </ul>
+                    
                 </div>
                 <div class="row-content col-lg-2 col-sm-4 col-xs-6">
-                    <h3>OPL THEMES</h3>
-                    <ul>
-                        <li><a href="#">Browse All</a></li>
-                    </ul>
-                </div>
+                    
+                </div>-->
 
             </div><!--/.row -->
         </div><!--/.container-->
 
         <!-- 社交图标列表，其中图标采用的是Font Awesome图标字体库-->
-        <ul class="social">
-            <li>
+        <br>
+        <br>
+        <ul class="social text-center">
                 <a href="#" title="Twitter Profile">
-                    <span class="icon fa fa-twitter"></span>
+                    <span class="icon fa fa-twitter" style="font-size:30px" aria-hidden="true"></span>
                 </a>
-            </li>
-            <li>
+                &nbsp&nbsp&nbsp&nbsp
                 <a href="#" title="Facebook Page">
-                    <span class="icon fa fa-facebook"></span>
+                    <span class="icon fa fa-facebook" style="font-size:30px" aria-hidden="true"></span>
                 </a>
-            </li>
-            <li>
+                &nbsp&nbsp&nbsp&nbsp
                 <a href="#" title="LinkedIn Profile">
-                    <span class="icon fa fa-linkedin"></span>
+                    <span class="icon fa fa-linkedin" style="font-size:30px" aria-hidden="true"></span>
                 </a>
-            </li>
-            <li>
-                <a href="#" title="Goole+ Profile">
-                    <span class="icon fa fa-google"></span>
+                &nbsp&nbsp&nbsp&nbsp
+                <a class="text-muted" href="#" title="Goole+ Profile">
+                    <span class="icon fa fa-google" style="font-size:30px" aria-hidden="true"></span>
                 </a>
-            </li>
-            <li>
+                &nbsp&nbsp&nbsp&nbsp
                 <a href="#" title="Github Profile">
-                    <span class="icon fa fa-github"></span>
+                    <span class="icon fa fa-github" style="font-size:30px" aria-hidden="true"></span>
                 </a>
-            </li>
         </ul>
-        <p align="center" style="margin-top: 20px;color:#f0f0f0;">
-            Copyright &copy;2015 Dreyer
+        <p align="center" style="margin-top: 20px;color:#000000;">
+            Copyright &copy;2020 dijkstra
         </p>
 </footer>
 </html>
