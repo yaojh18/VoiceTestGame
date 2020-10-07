@@ -2,7 +2,8 @@
 Unity test for personnel.
 """
 from django.test import TestCase
-import requests
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 
 # Create your tests here.
 
@@ -10,6 +11,29 @@ class LogTest(TestCase):
     """
     Unity test for Login and Registration.
     """
+    def setUp(self):
+        user = ContentType.objects.get(model='user', app_label='auth')
+
+        add_media = Permission.objects.create(
+            content_type=user, codename='add_media', name="Can add new media")
+        update_media = Permission.objects.create(
+            content_type=user, codename='update_media',name='Can update existing media')
+        query_media = Permission.objects.create(
+            content_type=user, codename='query_media', name='Can query existing media')
+        profile = Permission.objects.create(
+            content_type=user, codename='profile', name='Have user profile')
+
+        manager = Group.objects.create(name='manager')
+        manager.permissions.add(add_media)
+        manager.permissions.add(query_media)
+        manager.permissions.add(update_media)
+        manager.save()
+
+        visitor = Group.objects.create(name='visitor')
+        visitor.permissions.add(query_media)
+        visitor.permissions.add(profile)
+        visitor.save()
+
     def login(self, username=None, password=None):
         """
         Login method.
@@ -33,6 +57,16 @@ class LogTest(TestCase):
         return self.client.post('/api/users/registration/', data=data,
                                 content_type='application/json')
 
+    def login_for_wechat(self, session_id=None):
+        """
+        Login method for wechat.
+        """
+        data = {
+            "code": session_id
+        }
+        return self.client.post('/api/wechat/login/', data=data,
+                                content_type='application/json')
+
     def test_login(self):
         """
         Try to login with admin.
@@ -48,19 +82,10 @@ class LogTest(TestCase):
         response = self.registration('test', '123456', '123456')
         self.assertIs(response.status_code, 200)
 
-WEAPP_ID = 'wxcec8955125bd6732'
-WEAPP_SECRETE = 'd26321578e183029be05d63ac982a660'
-def getWechatCredential(code):
-    auth_url = 'https://api.weixin.qq.com/sns/jscode2session'
-    params = dict()
-    params['appid'] = WEAPP_ID
-    params['secret'] = WEAPP_SECRETE
-    params['js_code'] = code
-    params['grant_type'] = 'authorization_code'
-    login_response = requests.get(auth_url, params=params)
-    login_response = login_response.json()
-    return login_response
-
-
-login_response = getWechatCredential("")
-print(login_response)
+    def test_wechat(self):
+        """
+        Test to get data from wechat backend.
+        """
+        response = self.login_for_wechat('123456')
+        self.assertIs(response.status_code, 200)
+        print(response)

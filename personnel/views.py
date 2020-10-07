@@ -9,13 +9,19 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
-from .serializers import UserInfoSerializer, UserLoginSerializer, UserRegistrationSerializer, WechatLoginSerializer
+from .serializers import UserInfoSerializer, \
+    UserLoginSerializer, UserRegistrationSerializer, WechatLoginSerializer
 # Create your views here.
 
 WEAPP_ID = 'wxcec8955125bd6732'
 WEAPP_SECRETE = 'd26321578e183029be05d63ac982a660'
 
-def getWechatCredential(code):
+
+def get_wechat_credential(code):
+    """
+    Get openid from backend of Wechat,
+    using url:https://api.weixin.qq.com/sns/jscode2session.
+    """
     auth_url = 'https://api.weixin.qq.com/sns/jscode2session'
     params = dict()
     params['appid'] = WEAPP_ID
@@ -65,7 +71,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'code':status.HTTP_200_OK, 'token': ''})
         return Response({'code':status.HTTP_401_UNAUTHORIZED, 'msg': res.errors})
 
+
 class WechatViewSet(viewsets.ModelViewSet):
+    """
+    Define API for /api/wechat/.
+    """
     queryset = User.objects.none()
     serializer_class = WechatLoginSerializer
 
@@ -79,21 +89,19 @@ class WechatViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'])
     def login(self, request):
-        login_response = getWechatCredential(request.data['code'])
-        res = self.serializer_class(data={'openid':'1234567'})
+        """
+        API for /api/wechat/login.
+        """
+        login_response = get_wechat_credential(request.data['code'])
         if 'errcode' in login_response:
             return Response({'code': status.HTTP_404_NOT_FOUND, 'msg': 'Wrong session_id'})
         try:
             openid = login_response['openid']
             user = User.objects.get(userprofile__openid=openid)
-            #先这样
             return Response({'code': status.HTTP_200_OK, 'token': user.id})
         except User.DoesNotExist:
             res = self.serializer_class(data=login_response)
             if res.is_valid():
                 res.save()
-                #先这样
-                return Response({'code': status.HTTP_200_OK, 'token': res.openid})
+                return Response({'code': status.HTTP_200_OK, 'token': ""})
         return Response({'code':status.HTTP_404_NOT_FOUND, 'msg': 'Unknown error'})
-
-
