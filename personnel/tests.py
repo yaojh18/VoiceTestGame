@@ -2,6 +2,7 @@
 Unity test for personnel.
 """
 from django.test import TestCase
+import requests
 
 # Create your tests here.
 
@@ -46,3 +47,20 @@ class LogTest(TestCase):
         """
         response = self.registration('test', '123456', '123456')
         self.assertIs(response.status_code, 200)
+
+WEAPP_ID = 'wxcec8955125bd6732'
+WEAPP_SECRETE = 'd26321578e183029be05d63ac982a660'
+def getWechatCredential(code):
+    auth_url = 'https://api.weixin.qq.com/sns/jscode2session'
+    params = dict()
+    params['appid'] = WEAPP_ID
+    params['secret'] = WEAPP_SECRETE
+    params['js_code'] = code
+    params['grant_type'] = 'authorization_code'
+    login_response = requests.get(auth_url, params=params)
+    login_response = login_response.json()
+    return login_response
+
+
+login_response = getWechatCredential("")
+print(login_response)

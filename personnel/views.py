@@ -80,6 +80,7 @@ class WechatViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['POST'])
     def login(self, request):
         login_response = getWechatCredential(request.data['code'])
+        res = self.serializer_class(data={'openid':'1234567'})
         if 'errcode' in login_response:
             return Response({'code': status.HTTP_404_NOT_FOUND, 'msg': 'Wrong session_id'})
         try:
@@ -93,6 +94,6 @@ class WechatViewSet(viewsets.ModelViewSet):
                 res.save()
                 #先这样
                 return Response({'code': status.HTTP_200_OK, 'token': res.openid})
-            return Response({'code':status.HTTP_404_NOT_FOUND, 'msg': 'Unknown error'})
+        return Response({'code':status.HTTP_404_NOT_FOUND, 'msg': 'Unknown error'})
 
 
