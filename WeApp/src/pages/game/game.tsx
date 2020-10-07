@@ -39,11 +39,11 @@ export default class Game extends Component {
   render () {
     return (
       <View className='frame'>
-        <View className="personal_info">
-          <Image src={this.state.avatarUrl} className="image">
+        <View className='personal_info'>
+          <Image src={this.state.avatarUrl} className='image'>
           
           </Image>
-          <View className="personal_info_text">
+          <View className='personal_info_text'>
             <Text>
               {this.state.nickName}
             </Text>

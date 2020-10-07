@@ -5,6 +5,8 @@ Serializers for personnel.
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from .models import UserProfile
 
 
 class ReadGroupInfo(serializers.RelatedField):
@@ -73,3 +75,28 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             name = validated_data.pop('name')
             return User.objects.create_user(**validated_data, first_name=name)
         return User.objects.create_user(**validated_data)
+
+
+class WechatLoginSerializer(serializers.ModelSerializer):
+    openid = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'openid']
+
+    def get_openid(self, obj):
+        return obj.userprofile.openid
+
+    def validate(self, attrs):
+        res = dict()
+        res['openid'] = attrs['openid']
+        res['username'] = 'wx_' + attrs['open_id']
+        res['password'] = make_password(res['username'])
+        return res
+
+    def create(self, validated_data):
+        open_id = validated_data.pop('openid')
+        user = User.objects.create_user(**validated_data)
+        userprofile = UserProfile(user=user, openid=open_id)
+        userprofile.save()
+        return user

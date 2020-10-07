@@ -13,7 +13,4 @@ class UserProfile(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
     # Not knowing if it is correct.
-    tel = models.CharField(max_length=12)
-    gender = models.CharField(max_length=2)
-    birth = models.DateTimeField()
-    #Add more
+    openid = models.CharField(max_length=128, null=True, unique=True)
