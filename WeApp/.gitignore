@@ -5,3 +5,4 @@ deploy_versions/
 node_modules/
 coverage/
 .DS_Store
+coverage/

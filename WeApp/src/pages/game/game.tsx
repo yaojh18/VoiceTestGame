@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import Taro from '@tarojs/taro'
-import { View, Button, Image, Text } from '@tarojs/components'
+import { View, Image, Text } from '@tarojs/components'
 import './game.less'
 
-export default class Game extends Component {
+export default class Game extends Component <any, any>{
   constructor(props) {
     super(props);
     this.state={
