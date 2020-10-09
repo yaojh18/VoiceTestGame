@@ -11,7 +11,15 @@ class OriginMediaSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = OriginMedia
-        fields = ('title', 'content', 'audio_path', 'video_path')
+        fields = "__all__"
+        # fields = ('title', 'content', 'audio_path', 'video_path')
+
+    def update(self, old_data):
+        old_data.title = self.title
+        old_data.content = self.content
+        old_data.audio_path = self.audio_path
+        old_data.video_path = self.video_path
+        old_data.save()
 
 
 class UserAudioSerializer(serializers.ModelSerializer):
@@ -20,4 +28,5 @@ class UserAudioSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = UserAudio
-        fields = ('user', 'origin', 'audio_path', 'score')
+        fields = "__all__"
+        # fields = ('user', 'origin', 'audio_path', 'score')

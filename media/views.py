@@ -22,6 +22,11 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         add an object to OriginMedia
         """
+        media_serializer = self.serializer_class(data=request.data)
+        if media_serializer.is_valid():
+            media_serializer.save()
+            return Response(media_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(media_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
     def delete(self, request):
@@ -35,6 +40,14 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         edit an object in OriginMedia
         """
+        media_serializer = self.serializer_class(data=request.data)
+        if media_serializer.is_valid():
+            try:
+                old_data = OriginMedia.objects.get(pk=media_serializer.id)
+            except OriginMedia.DoesNotExist:
+                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+            self.serializer_class.update(old_data)
+            return Response('')
 
     # pylint: disable=R0201, R1710
     # these shouldn't be disabled.
@@ -47,10 +60,10 @@ class ManagerViewSets(viewsets.ModelViewSet):
         if 'id' in res:
             data_id = res['id']
             try:
-                OriginMedia.objects.get(pk=data_id)
+                media_data = OriginMedia.objects.get(pk=data_id)
             except OriginMedia.DoesNotExist:
                 return Response({'code': status.HTTP_404_NOT_FOUND, 'msg': 'Fail to find the data'})
-            return Response({'code': status.HTTP_200_OK, 'msg': 'Data found successfully'})
+            return Response(media_data.content, status=status.HTTP_200_OK)
 
 
 class ClientViewSets(viewsets.ModelViewSet):
