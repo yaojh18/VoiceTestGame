@@ -1,10 +1,13 @@
 """
 Unity test for personnel.
 """
+import json
 from django.test import TestCase
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from .serializers import WechatLoginSerializer
 
+RESPONSE_TYPE = 'application/json'
 # Create your tests here.
 
 class LogTest(TestCase):
@@ -43,9 +46,9 @@ class LogTest(TestCase):
             'password': password
         }
         return self.client.post('/api/users/login/', data=data,
-                                content_type='application/json')
+                                content_type=RESPONSE_TYPE)
 
-    def registration(self, username=None, password=None, password2=None):
+    def registration(self, username=None, password=None, password2=None, name=None):
         """
         Registration method.
         """
@@ -54,8 +57,10 @@ class LogTest(TestCase):
             'password': password,
             'password2': password2
         }
+        if name:
+            data['name'] = name
         return self.client.post('/api/users/registration/', data=data,
-                                content_type='application/json')
+                                content_type=RESPONSE_TYPE)
 
     def login_for_wechat(self, session_id=None):
         """
@@ -65,27 +70,57 @@ class LogTest(TestCase):
             "code": session_id
         }
         return self.client.post('/api/wechat/login/', data=data,
-                                content_type='application/json')
-
-    def test_login(self):
-        """
-        Try to login with admin.
-        """
-        response = self.login('admin', '123456')
-        print(response.status_code)
-        self.assertIs(response.status_code, 200)
+                                content_type=RESPONSE_TYPE)
 
     def test_registration(self):
         """
         Try to create test account.
         """
         response = self.registration('test', '123456', '123456')
-        self.assertIs(response.status_code, 200)
+        code = json.loads(response.content)
+        self.assertEqual(code['code'], 200)
+        response = self.registration('test', '123456', '1234567')
+        code = json.loads(response.content)
+        self.assertNotEqual(code['code'], 200)
+        response = self.registration('test1', '123456', '123456', 'yao123')
+        code = json.loads(response.content)
+        self.assertEqual(code['code'], 200)
+
+    def test_login(self):
+        """
+        Try to login with admin.
+        """
+        response = self.login('test2', '123456')
+        code = json.loads(response.content)
+        self.assertNotEqual(code['code'], 200)
+        self.registration('test2', '123456', '123456')
+        response = self.login('test2', '123456')
+        code = json.loads(response.content)
+        self.assertEqual(code['code'], 200)
 
     def test_wechat(self):
         """
         Test to get data from wechat backend.
         """
         response = self.login_for_wechat('123456')
-        self.assertIs(response.status_code, 200)
-        print(response)
+        code = json.loads(response.content)
+        self.assertNotEqual(code['code'], 200)
+
+    def test_viewset(self):
+        """
+        Test if viewset works properly.
+        """
+        self.client.get('/api/users/')
+        self.client.get('/api/wechat')
+
+    def test_wechat_serializer(self):
+        """
+        Because we can't test wechat, so we test how wechat serializer.
+        """
+        data = {
+            'openid': '123456'
+        }
+        res = WechatLoginSerializer(data=data)
+        if res.is_valid():
+            self.assertEqual(res.validated_data['openid'], '123456')
+            res.save()

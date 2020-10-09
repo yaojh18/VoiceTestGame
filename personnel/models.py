@@ -12,5 +12,4 @@ class UserProfile(models.Model):
     Add information for User.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
-    # Not knowing if it is correct.
     openid = models.CharField(max_length=128, null=True, unique=True)

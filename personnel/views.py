@@ -3,18 +3,15 @@ Define API for frontend here.
 """
 # pylint: disable=E5142, R0901
 import requests
-
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
+from config.local_settings import WEAPP_ID, WEAPP_SECRETE
 from .serializers import UserInfoSerializer, \
     UserLoginSerializer, UserRegistrationSerializer, WechatLoginSerializer
 # Create your views here.
-
-WEAPP_ID = 'wxcec8955125bd6732'
-WEAPP_SECRETE = 'd26321578e183029be05d63ac982a660'
 
 
 def get_wechat_credential(code):
@@ -36,7 +33,6 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     Define API under api/user/ .
     """
-    #queryset = User.objects.all()
     queryset = User.objects.none()
     serializer_class = UserInfoSerializer
 

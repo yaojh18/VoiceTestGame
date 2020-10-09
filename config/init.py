@@ -1,7 +1,6 @@
-import os
-import django
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
+import os, sys, django
+sys.path.extend([os.path.abspath(os.path.dirname(os.path.dirname(__file__)))])
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", 'app.settings')
 django.setup()
 
 from django.contrib.auth.models import Group, Permission

@@ -86,14 +86,11 @@ class WechatLoginSerializer(serializers.Serializer):
     """
     Login designed for wechat
     """
-    #openid = serializers.PrimaryKeyRelatedField(source='userprofile.openid',
-    #                                            queryset=UserProfile.objects.all(), required=True)
     openid = serializers.CharField(required=True, source='userprofile.openid')
     username = serializers.CharField(max_length=128, required=False)
     password = serializers.CharField(max_length=128, required=False)
 
     def validate(self, attrs):
-        print("attrs:", attrs)
         res = dict()
         res['openid'] = attrs['userprofile']['openid']
         res['username'] = 'wx_' + attrs['userprofile']['openid']

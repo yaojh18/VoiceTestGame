@@ -1,6 +1,7 @@
 #settings
 .idea
 **/__pycache__
+config_copy
 
 #test result
 .coverage
