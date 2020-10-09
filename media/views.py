@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from .models import OriginMedia, UserAudio
-from .serializers import OriginMediaSerializer, UserAudioSerializer, SearchSerializer
+from .serializers import OriginMediaSerializer, UserAudioSerializer, SearchOriginSerializer, EditOriginSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -26,6 +26,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
         if media_serializer.is_valid():
             media_serializer.save()
             return Response(media_serializer.data, status=status.HTTP_201_CREATED)
+        print('add:400', media_serializer.errors)
         return Response(media_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
@@ -33,14 +34,15 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         edit an object in OriginMedia
         """
-        media_serializer = OriginMediaSerializer(data=request.data)
-        if media_serializer.is_valid():
-            try:
-                old_data = OriginMedia.objects.get(pk=media_serializer.id)
-            except OriginMedia.DoesNotExist:
+        search_serializer = EditOriginSerializer(data=request.data)
+        if search_serializer.is_valid():
+            edit_res = search_serializer.update_db()
+            if edit_res:
+                return Response(search_serializer.data, status=status.HTTP_201_CREATED)
+            else:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            self.serializer_class.update(old_data)
-            return Response('')
+        print('edit:400', search_serializer.errors)
+        return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # pylint: disable=R0201, R1710
     # these shouldn't be disabled.
@@ -49,12 +51,13 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         search in OriginMedia according to id
         """
-        search_serializer = SearchSerializer(data=request.data)
+        search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = search_serializer.data['id']
             try:
                 media_data = OriginMedia.objects.get(pk=data_id)
             except OriginMedia.DoesNotExist:
+                # print('search:404, search_data_id:', data_id)
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
             return Response(media_serializer.data, status=status.HTTP_200_OK)
