@@ -65,7 +65,9 @@
 #### 查询(客户端请求)
 - url: api/manager/search
 - request: 关卡id
-- response: 数据内容
+- response: 数据内容：{title(标题), content(文案), audio_file_name(音频文件名), video_file_name(视频文件名)}
+- 此后可用/media系列url访问音视频文件
+- 管理平台可以暂时用这个，修改界面可以先只显示文件名，之后会再专门写一个可以下载文件的url
 ### 用户数据操作
 #### 添加
 - url: api/client/add
@@ -97,3 +99,10 @@
 + 完成了对于微信小程序登录/注册的几口，访问方式为/api/wechat/login, 数据格式为json，需要包含code项为前端传入的session_id.
 返回值为json格式，包括状态码code，其中200表示成功，若成功则会返回一个token， 否则返回错误信息msg
 + 删除了前端分支，项目完全独立为后端部分，方便之后的开发与部署
+
+# 2020.10.10 李侔繁
+#### 音视频数据访问接口（客户端可用）
+- 原版音频：/media/origin/audio/{音频文件名}
+- 视频：/media/origin/video/{视频文件名}
+- 音频和视频文件名可通过前述查询url返回，格式从/media开始(例如，返回音频文件名“/media/origin/audio/test1.wav”)
+- 注意：仅客户端可用，访问上述url可直接播放音频/视频，具体效果有待测试

@@ -30,3 +30,10 @@ class UserAudioSerializer(serializers.ModelSerializer):
         model = UserAudio
         fields = "__all__"
         # fields = ('user', 'origin', 'audio_path', 'score')
+
+
+class SearchSerializer(serializers.Serializer):
+    """
+    serialize search requests
+    """
+    id = serializers.IntegerField(allow_null=True)
