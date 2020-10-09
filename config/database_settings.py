@@ -1,11 +1,11 @@
 import os
-DATABASES = {
+'''DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join('E:\Voice Test Game', 'db.sqlite3'),
     }
-}
-'''DATABASES = {
+}'''
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'voice_test_game',
@@ -18,7 +18,7 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         }
     }
-}'''
+}
 '''DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

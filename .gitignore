@@ -11,7 +11,7 @@ coverage-reports
 db.sqlite3
 
 #media file
-mediaAPI/media/*
+media/media/*
 
 #media app
 /app/__init__.py
