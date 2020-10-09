@@ -1,19 +1,16 @@
 """
-TODO
+Tests of media app
 """
 from django.test import TestCase
-<<<<<<< HEAD
 
-=======
->>>>>>> 7c21844ddffdcffc15373c4183e60b4c9307913c
 
 class ManagerTest(TestCase):
     """
-    TODO
+    tests of ManagerViewSets
     """
     def search(self, data_id=None):
         """
-        TODO
+        create post request of search
         """
         data = {
             'id': data_id
@@ -22,8 +19,7 @@ class ManagerTest(TestCase):
 
     def test_search(self):
         """
-        TODO
+        search: test case 1
         """
         response = self.search(1)
-        print(response.status_code)
         self.assertEqual(response.status_code, 404)

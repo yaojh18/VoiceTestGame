@@ -1,5 +1,5 @@
 """
-TODO
+models for media app
 """
 # pylint: disable=E5142
 from django.db import models
@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 
 class OriginMedia(models.Model):
     """
-    TODO
+    model of original media
     """
     title = models.CharField(max_length=64)
     content = models.CharField(max_length=1024)  # 文案, 格式可能修改
@@ -18,7 +18,7 @@ class OriginMedia(models.Model):
 
 class UserAudio(models.Model):
     """
-    TODO
+    model of user audio
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     origin = models.ForeignKey(OriginMedia, on_delete=models.CASCADE)

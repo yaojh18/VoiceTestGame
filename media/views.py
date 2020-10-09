@@ -1,5 +1,5 @@
 """
-TODO
+Views of media app
 """
 # pylint: disable=R0901
 from rest_framework import viewsets
@@ -47,7 +47,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
         if 'id' in res:
             data_id = res['id']
             try:
-                _ = OriginMedia.objects.get(pk=data_id)
+                OriginMedia.objects.get(pk=data_id)
             except OriginMedia.DoesNotExist:
                 return Response({'code': status.HTTP_404_NOT_FOUND, 'msg': 'Fail to find the data'})
             return Response({'code': status.HTTP_200_OK, 'msg': 'Data found successfully'})

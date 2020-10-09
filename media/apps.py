@@ -1,11 +1,11 @@
 """
-TODO
+config for media app
 """
 from django.apps import AppConfig
 
 
 class MediaConfig(AppConfig):
     """
-    TODO
+    config for media app
     """
     name = 'media'

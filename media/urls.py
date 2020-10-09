@@ -1,5 +1,5 @@
 """
-TODO
+urls for media app
 """
 from rest_framework.routers import DefaultRouter
 from .views import ManagerViewSets, ClientViewSets

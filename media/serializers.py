@@ -1,5 +1,5 @@
 """
-TODO
+Serializers for media app
 """
 from rest_framework import serializers
 from .models import OriginMedia, UserAudio
@@ -7,7 +7,7 @@ from .models import OriginMedia, UserAudio
 
 class OriginMediaSerializer(serializers.ModelSerializer):
     """
-    TODO
+    serialize OriginMedia data
     """
     class Meta:
         model = OriginMedia
@@ -16,7 +16,7 @@ class OriginMediaSerializer(serializers.ModelSerializer):
 
 class UserAudioSerializer(serializers.ModelSerializer):
     """
-    TODO
+    serialize UserAudio data
     """
     class Meta:
         model = UserAudio
