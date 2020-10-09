@@ -1,10 +1,28 @@
 """
 Tests of media app
 """
+# pylint: disable=R0913
+import os
 from django.test import TestCase
 from .models import OriginMedia
-from django.core.files.uploadedfile import UploadedFile
-import os
+
+
+
+def create_file():
+    """
+    create test files
+    """
+    if not os.path.exists('./media/media/test/'):
+        os.mkdir('./media/media/test/')
+    file = open('./media/media/test/audio.txt', 'w')
+    file.write('this is an audio')
+    file.close()
+    file = open('./media/media/test/video.txt', 'w')
+    file.write('this is a video')
+    file.close()
+    audio_file = open('./media/media/test/audio.txt')
+    video_file = open('./media/media/test/video.txt')
+    return audio_file, video_file
 
 class ManagerTest(TestCase):
     """
@@ -20,18 +38,7 @@ class ManagerTest(TestCase):
                                    video_path='/media/origin/video/test2.mp4')
         # print(OriginMedia.objects.values())
 
-    def create_file(self):
-        if not os.path.exists('./media/media/test/'):
-            os.mkdir('./media/media/test/')
-        f = open('./media/media/test/audio.txt', 'w')
-        f.write('this is an audio')
-        f.close()
-        f = open('./media/media/test/video.txt', 'w')
-        f.write('this is a video')
-        f.close()
-        audio_file = open('./media/media/test/audio.txt')
-        video_file = open('./media/media/test/video.txt')
-        return audio_file, video_file
+
 
     def search(self, data_id=None):
         """
@@ -82,14 +89,14 @@ class ManagerTest(TestCase):
         """
         test add method
         """
-        audio_file, video_file = self.create_file()
+        audio_file, video_file = create_file()
         response = self.add(title='test3', content='test 3',
                             audio_path=audio_file,
                             video_path=video_file)
         # print('test_add_201:', response)
         self.assertEqual(response.status_code, 201)
 
-        audio_file, video_file = self.create_file()
+        audio_file, video_file = create_file()
         response = self.add(title='test3', content='',
                             audio_path=audio_file,
                             video_path=video_file)
@@ -104,21 +111,21 @@ class ManagerTest(TestCase):
         """
         test edit method
         """
-        audio_file, video_file = self.create_file()
+        audio_file, video_file = create_file()
         response = self.edit(data_id=4, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
         # print('test_edit_201:', response)
         self.assertEqual(response.status_code, 201)
 
-        audio_file, video_file = self.create_file()
+        audio_file, video_file = create_file()
         response = self.edit(data_id=101, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
         # print('test_edit_404:', response)
         self.assertEqual(response.status_code, 404)
 
-        audio_file, video_file = self.create_file()
+        audio_file, video_file = create_file()
         response = self.edit(data_id='hh', title='', content='',
                              audio_path=audio_file,
                              video_path=video_file)

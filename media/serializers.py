@@ -1,6 +1,7 @@
 """
 Serializers for media app
 """
+# pylint: disable=E5142, W0223, W0221, R0201
 from rest_framework import serializers
 from .models import OriginMedia, UserAudio
 
@@ -12,14 +13,6 @@ class OriginMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginMedia
         fields = "__all__"
-        # fields = ('title', 'content', 'audio_path', 'video_path')
-
-    def update(self, old_data):
-        old_data.title = self.title
-        old_data.content = self.content
-        old_data.audio_path = self.audio_path
-        old_data.video_path = self.video_path
-        old_data.save()
 
 
 class UserAudioSerializer(serializers.ModelSerializer):
@@ -29,7 +22,6 @@ class UserAudioSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAudio
         fields = "__all__"
-        # fields = ('user', 'origin', 'audio_path', 'score')
 
 
 class SearchOriginSerializer(serializers.Serializer):
@@ -49,7 +41,10 @@ class EditOriginSerializer(serializers.Serializer):
     audio_path = serializers.FileField(max_length=256, allow_null=True)
     video_path = serializers.FileField(max_length=256, allow_null=True)
 
-    def update_db(self):
+    def update_data(self):
+        """
+        update data
+        """
         if not self.data['id']:
             return False
         try:
