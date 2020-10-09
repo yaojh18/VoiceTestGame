@@ -2,7 +2,10 @@
 TODO
 """
 from django.test import TestCase
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7c21844ddffdcffc15373c4183e60b4c9307913c
 
 class ManagerTest(TestCase):
     """

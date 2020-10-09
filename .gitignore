@@ -1,7 +1,7 @@
 #settings
 .idea
-*/__pycache__
-*/*/__pycache__
+**/__pycache__
+config_copy
 
 #test result
 .coverage
@@ -12,6 +12,3 @@ db.sqlite3
 
 #media file
 media/media/*
-
-#media app
-/app/__init__.py
