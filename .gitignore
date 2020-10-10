@@ -9,3 +9,6 @@ xunit-reports
 coverage-reports
 .pytest_cache
 db.sqlite3
+
+#temp files
+media/media
