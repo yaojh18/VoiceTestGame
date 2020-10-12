@@ -95,7 +95,7 @@ class ManagerTest(TestCase):
         OriginMedia.objects.create(title='test2', content='test 2',
                                    audio_path='/media/origin/audio/test2.wav',
                                    video_path='/media/origin/video/test2.mp4')
-        response = self.edit(data_id=2, title='test_edit', content='test edit',
+        response = self.edit(data_id=1, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
         self.assertEqual(response.status_code, 201)
@@ -128,7 +128,7 @@ class ManagerTest(TestCase):
         OriginMedia.objects.create(title='test4', content='test 4',
                                    audio_path='/media/origin/audio/test4.wav',
                                    video_path='/media/origin/video/test4.mp4')
-        response = self.search(data_id=3)
+        response = self.search(data_id=1)
         self.assertEqual(response.status_code, 200)
         response = self.search(data_id=8)
         self.assertEqual(response.status_code, 404)
