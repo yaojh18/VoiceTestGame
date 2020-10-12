@@ -28,7 +28,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
         if media_serializer.is_valid():
             media_serializer.save()
             return Response(media_serializer.data, status=status.HTTP_201_CREATED)
-        print('add:400', media_serializer.errors)
+        # print('add:400', media_serializer.errors)
         return Response(media_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
@@ -43,7 +43,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
             if edit_res:
                 return Response(search_serializer.data, status=status.HTTP_201_CREATED)
             return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-        print('edit:400', search_serializer.errors)
+        # print('edit:400', search_serializer.errors)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # pylint: disable=R0201, R1710

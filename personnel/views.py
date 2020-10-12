@@ -29,6 +29,7 @@ def get_wechat_credential(code):
     login_response = login_response.json()
     return login_response
 
+
 class UserViewSet(viewsets.ModelViewSet):
     """
     Define API under api/user/ .

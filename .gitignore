@@ -11,4 +11,5 @@ coverage-reports
 db.sqlite3
 
 #media file
-media/media/*
+media/media/origin
+media/media/test
