@@ -11,8 +11,12 @@ from django.contrib.auth.models import User
 from config.local_settings import WEAPP_ID, WEAPP_SECRETE
 from .serializers import UserInfoSerializer, \
     UserLoginSerializer, UserRegistrationSerializer, WechatLoginSerializer
+from rest_framework_jwt.settings import api_settings
 # Create your views here.
 
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+jwt_response_payload_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
 
 def get_wechat_credential(code):
     """
@@ -28,6 +32,13 @@ def get_wechat_credential(code):
     login_response = requests.get(auth_url, params=params)
     login_response = login_response.json()
     return login_response
+
+
+def get_user_token(user):
+    payload = jwt_payload_handler(user)
+    token = jwt_encode_handler(payload)
+    return jwt_response_payload_handler(token, user)
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -52,8 +63,9 @@ class UserViewSet(viewsets.ModelViewSet):
         self.serializer_class = UserLoginSerializer
         res = UserLoginSerializer(data=request.data)
         if res.is_valid():
-            return Response({'code':status.HTTP_200_OK, 'token': ''})
-        return Response({'code':status.HTTP_401_UNAUTHORIZED, 'msg': res.errors})
+            token = get_user_token(res.validated_data['user'])
+            return Response({'token': token}, status=status.HTTP_200_OK)
+        return Response({'msg': res.errors}, status=status.HTTP_401_UNAUTHORIZED)
 
     @action(detail=False, methods=['POST'])
     def registration(self, request):
@@ -64,8 +76,8 @@ class UserViewSet(viewsets.ModelViewSet):
         res = self.serializer_class(data=request.data)
         if res.is_valid():
             res.save()
-            return Response({'code':status.HTTP_200_OK, 'token': ''})
-        return Response({'code':status.HTTP_401_UNAUTHORIZED, 'msg': res.errors})
+            return Response({'token': ''}, status=status.HTTP_200_OK)
+        return Response({'msg': res.errors}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class WechatViewSet(viewsets.ModelViewSet):
@@ -90,14 +102,14 @@ class WechatViewSet(viewsets.ModelViewSet):
         """
         login_response = get_wechat_credential(request.data['code'])
         if 'errcode' in login_response:
-            return Response({'code': status.HTTP_404_NOT_FOUND, 'msg': 'Wrong session_id'})
+            return Response({'msg': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
         try:
             openid = login_response['openid']
             user = User.objects.get(userprofile__openid=openid)
-            return Response({'code': status.HTTP_200_OK, 'token': user.id})
+            return Response({'token': user.id}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             res = self.serializer_class(data=login_response)
             if res.is_valid():
                 res.save()
-                return Response({'code': status.HTTP_200_OK, 'token': ""})
-        return Response({'code':status.HTTP_404_NOT_FOUND, 'msg': 'Unknown error'})
+                return Response({'token': ""}, status=status.HTTP_200_OK)
+        return Response({'msg': 'Unknown error'}, status=status.HTTP_404_NOT_FOUND)
