@@ -112,3 +112,5 @@
 + token验证的机制，更新后的token验证机制如下：
     + 前端登录后获取token，之后在访问其他API的时候请在header中添加：{'Authorization' : 'JWT ' + token}, 别问我，自带的token验证就是这样的，我懒得自己写格式了；
     + 后端除了登录注册界面都应限制访问，限制方法为permission_classes = [IsAuthenticated,], IsAuthenticated在rest_framework.permissions中，如果写在参数里面就是对该视图集所有的子路由采用这个验证方法， 否则也可以在action的参数里面添加，特定对某个子路由进行验证。
++ 微信更新用户数据接口：api/wechat/profile/，接受格式为application/json，参数包括"nick_name”,"city","province","gender"，均为必须项。
++ 微信上传用户数据接口：api/wechat/audio/,接受格式为multipart/form-data,参数包括"media"(媒体编号),"audio"音频文件，均为必须项。
