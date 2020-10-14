@@ -12,16 +12,16 @@ def create_file():
     create test files
     """
     cwd = os.getcwd()
-    if not os.path.exists(cwd+'/media/media/test/'):
-        os.mkdir(cwd+'/media/media/test/')
-    file = open(cwd+'/media/media/test/audio.txt', 'w')
+    if not os.path.exists(cwd+'/data/test/'):
+        os.mkdir(cwd+'/data/test/')
+    file = open(cwd+'/data/test/audio.txt', 'w')
     file.write('this is an audio')
     file.close()
-    file = open(cwd+'/media/media/test/video.txt', 'w')
+    file = open(cwd+'/data/test/video.txt', 'w')
     file.write('this is a video')
     file.close()
-    audio_file = open(cwd+'/media/media/test/audio.txt')
-    video_file = open(cwd+'/media/media/test/video.txt')
+    audio_file = open(cwd+'/data/test/audio.txt')
+    video_file = open(cwd+'/data/test/video.txt')
     return audio_file, video_file
 
 
@@ -80,11 +80,11 @@ class ManagerTest(TestCase):
         self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
-        if os.path.isfile(cwd+'/media/media/origin/audio/audio.txt'):
-            os.remove(cwd+'/media/media/origin/audio/audio.txt')
-        if os.path.isfile(cwd + '/media/media/origin/video/video.txt'):
-            os.remove(cwd+'/media/media/origin/video/video.txt')
-        # os.rmdir(cwd+'/media/media/test/')
+        if os.path.isfile(cwd+'/data/origin/audio/audio.txt'):
+            os.remove(cwd+'/data/origin/audio/audio.txt')
+        if os.path.isfile(cwd + '/data/origin/video/video.txt'):
+            os.remove(cwd+'/data/origin/video/video.txt')
+        # os.rmdir(cwd+'/data/test/')
 
     def test_edit(self):
         """
@@ -112,10 +112,10 @@ class ManagerTest(TestCase):
         self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
-        if os.path.isfile(cwd + '/media/media/origin/audio/audio.txt'):
-            os.remove(cwd + '/media/media/origin/audio/audio.txt')
-        if os.path.isfile(cwd + '/media/media/origin/video/video.txt'):
-            os.remove(cwd + '/media/media/origin/video/video.txt')
+        if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
+            os.remove(cwd + '/data/origin/audio/audio.txt')
+        if os.path.isfile(cwd + '/data/origin/video/video.txt'):
+            os.remove(cwd + '/data/origin/video/video.txt')
 
     def test_search(self):
         """
