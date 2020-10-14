@@ -29,7 +29,6 @@ class ManagerTest(TestCase):
     """
     Unity tests of ManagerViewSets
     """
-
     def search(self, data_id=None):
         """
         create search request

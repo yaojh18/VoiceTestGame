@@ -58,25 +58,12 @@
 - url: api/manager/edit
 - request: 要修改数据的id; 修改后数据的title(标题), content(文案), audio file(音频文件), video file(视频文件)
 - response: 成功/失败信息
-#### 查询(管理平台请求)
-- url: api/manager/search
-- request: 查询关键词
-- response: 数据内容
-#### 查询(客户端请求)
+#### 查询
 - url: api/manager/search
 - request: 关卡id
 - response: 数据内容：{title(标题), content(文案), audio_file_name(音频文件名), video_file_name(视频文件名)}
 - 此后可用/media系列url访问音视频文件
 - 管理平台可以暂时用这个，修改界面可以先只显示文件名，之后会再专门写一个可以下载文件的url
-### 用户数据操作
-#### 添加
-- url: api/client/add
-- request: 数据内容: {user(音频所属用户), media_id(关卡id), audio_file(音频文件), score(该段音频得分)}
-- response: 成功/失败信息
-#### 查找
-- url: api/client/search
-- request: {user(所属用户), media_id(关卡id), query_type(查找条件)}
-- response: 数据内容
 
 # 2020.10.6 姚季涵
 新增代码规范：
@@ -101,8 +88,22 @@
 + 删除了前端分支，项目完全独立为后端部分，方便之后的开发与部署
 
 # 2020.10.10 李侔繁
-#### 音视频数据访问接口（客户端可用）
+#### 音视频数据直接访问接口
 - 原版音频：/media/origin/audio/{音频文件名}
 - 视频：/media/origin/video/{视频文件名}
 - 音频和视频文件名可通过前述查询url返回，格式从/media开始(例如，返回音频文件名“/media/origin/audio/test1.wav”)
 - 注意：仅客户端可用，访问上述url可直接播放音频/视频，具体效果有待测试
+
+# 2020.10.14 李侔繁
+#### 单独返回音频接口
+- url: api/manager/audio
+- request: 关卡id
+- response: 音频文件
+#### 单独返回视频接口
+- url: api/manager/video
+- request: 关卡id
+- response: 视频文件
+#### 返回单条数据标题、文案
+- url: api/manager/material
+- request: 关卡id
+- response: {'title': 标题, 'text': 文案}

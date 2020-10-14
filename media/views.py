@@ -102,3 +102,22 @@ class ManagerViewSets(viewsets.ModelViewSet):
             url = '/media/' + audio_path
             return redirect(url)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['POST'])
+    def material(self, request):
+        """
+        return title and content according to id
+        """
+        self.serializer_class = SearchOriginSerializer
+        search_serializer = SearchOriginSerializer(data=request.data)
+        if search_serializer.is_valid():
+            data_id = request.data['id']
+            try:
+                media_data = OriginMedia.objects.get(pk=data_id)
+            except OriginMedia.DoesNotExist:
+                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+            media_serializer = OriginMediaSerializer(media_data)
+            title = media_serializer.data['title']
+            content = media_serializer.data['content']
+            return Response({'title': title, 'text': content}, status=status.HTTP_200_OK)
+        return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
