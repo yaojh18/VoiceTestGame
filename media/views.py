@@ -16,7 +16,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     actions on OriginMedia
     """
     queryset = OriginMedia.objects.all()
-    serializer_class = OriginMediaSerializer
+    serializer_class = SearchOriginSerializer
 
     @action(detail=False, methods=['POST'])
     def add(self, request):
@@ -80,7 +80,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
             video_path = media_serializer.data['video_path']
-            url = '/media/' + video_path
+            url = video_path
             return redirect(url)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -99,7 +99,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
             audio_path = media_serializer.data['audio_path']
-            url = '/media/' + audio_path
+            url = audio_path
             return redirect(url)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
