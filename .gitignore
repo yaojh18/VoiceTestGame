@@ -10,6 +10,6 @@ coverage-reports
 .pytest_cache
 db.sqlite3
 
-#media file
-media/media/origin
-media/media/test
+#temp files
+data/*
+!data/test/

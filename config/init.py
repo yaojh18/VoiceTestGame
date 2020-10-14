@@ -17,6 +17,8 @@ def init_group_and_permission():
         content_type=user, codename='query_media', name='Can query existing media')
     profile, created = Permission.objects.get_or_create(
         content_type=user, codename='profile', name='Have user profile')
+    audio, created = Permission.objects.get_or_create(
+        content_type=user, codename='audio', name='Have user audio')
 
     manager,created = Group.objects.get_or_create(name='manager')
     manager.permissions.add(add_media)
@@ -27,6 +29,7 @@ def init_group_and_permission():
     visitor, created = Group.objects.get_or_create(name='visitor')
     visitor.permissions.add(query_media)
     visitor.permissions.add(profile)
+    visitor.permissions.add(audio)
     visitor.save()
 
 init_group_and_permission()

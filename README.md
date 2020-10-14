@@ -107,3 +107,8 @@
 - url: api/manager/material
 - request: 关卡id
 - response: {'title': 标题, 'text': 文案}
+
+# 2020.10.13 姚季涵
++ token验证的机制，更新后的token验证机制如下：
+    + 前端登录后获取token，之后在访问其他API的时候请在header中添加：{'Authorization' : 'JWT ' + token}, 别问我，自带的token验证就是这样的，我懒得自己写格式了；
+    + 后端除了登录注册界面都应限制访问，限制方法为permission_classes = [IsAuthenticated,], IsAuthenticated在rest_framework.permissions中，如果写在参数里面就是对该视图集所有的子路由采用这个验证方法， 否则也可以在action的参数里面添加，特定对某个子路由进行验证。
