@@ -11,4 +11,5 @@ coverage-reports
 db.sqlite3
 
 #temp files
-media/media
+data/*
+!data/test/

@@ -6,7 +6,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
-from .models import UserProfile
+from .models import UserProfile, UserAudio
 
 
 class ReadGroupInfo(serializers.RelatedField):
@@ -50,6 +50,7 @@ class UserLoginSerializer(serializers.Serializer):
         user = authenticate(username=attrs['username'], password=attrs['password'])
         if not user:
             raise serializers.ValidationError
+        self.instance = User.objects.get(username=attrs['username'])
         return attrs
 
 
@@ -82,6 +83,43 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserProfileSerializer(serializers.Serializer):
+    """
+    Determine the format of userporfile data when updating.
+    """
+    nick_name = serializers.CharField(source='first_name')
+    gender = serializers.CharField(source='userprofile.gender')
+    city = serializers.CharField(source='userprofile.city')
+    province = serializers.CharField(source='userprofile.province')
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data['first_name']
+        profile = instance.userprofile
+        profile.gender = validated_data['userprofile']['gender']
+        profile.city = validated_data['userprofile']['city']
+        profile.province = validated_data['userprofile']['province']
+        instance.save()
+        profile.save()
+        return instance
+
+
+class UserAudioSerializer(serializers.ModelSerializer):
+    """
+    Determine the format of user audio data when writing.
+    """
+    class Meta:
+        model = UserAudio
+        fields = ['audio', 'media']
+
+    def create(self, validated_data):
+        user = self.context['user']
+        user_audio = UserAudio(user=user, media=validated_data['media'])
+        user_audio.audio.save(
+            name=user_audio.get_audio_name(), content=validated_data['audio'])
+        user_audio.save()
+        return user_audio
+
+
 class WechatLoginSerializer(serializers.Serializer):
     """
     Login designed for wechat
@@ -95,6 +133,7 @@ class WechatLoginSerializer(serializers.Serializer):
         res['openid'] = attrs['userprofile']['openid']
         res['username'] = 'wx_' + attrs['userprofile']['openid']
         res['password'] = make_password(res['username'])
+        self.instance = User.objects.filter(username=res['username']).first()
         return res
 
     def create(self, validated_data):
@@ -106,3 +145,6 @@ class WechatLoginSerializer(serializers.Serializer):
         visitor = Group.objects.get(name='visitor')
         user.groups.add(visitor)
         return user
+
+    def update(self, instance, validated_data):
+        return instance

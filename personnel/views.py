@@ -3,20 +3,22 @@ Define API for frontend here.
 """
 # pylint: disable=E5142, R0901
 import requests
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
 from config.local_settings import WEAPP_ID, WEAPP_SECRETE
-from .serializers import UserInfoSerializer, \
-    UserLoginSerializer, UserRegistrationSerializer, WechatLoginSerializer
-from rest_framework_jwt.settings import api_settings
+from .serializers import UserInfoSerializer, UserLoginSerializer, \
+    UserRegistrationSerializer, UserProfileSerializer, WechatLoginSerializer, \
+    UserAudioSerializer
 # Create your views here.
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_response_payload_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
+
 
 def get_wechat_credential(code):
     """
@@ -35,6 +37,9 @@ def get_wechat_credential(code):
 
 
 def get_user_token(user):
+    """
+    JWT default way to get user token.
+    """
     payload = jwt_payload_handler(user)
     token = jwt_encode_handler(payload)
     return jwt_response_payload_handler(token, user)
@@ -63,9 +68,9 @@ class UserViewSet(viewsets.ModelViewSet):
         self.serializer_class = UserLoginSerializer
         res = UserLoginSerializer(data=request.data)
         if res.is_valid():
-            token = get_user_token(res.validated_data['user'])
-            return Response({'token': token}, status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_401_UNAUTHORIZED)
+            token = get_user_token(res.instance)
+            return Response(token, status=status.HTTP_200_OK)
+        return Response({'msg': res.errors}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['POST'])
     def registration(self, request):
@@ -75,8 +80,8 @@ class UserViewSet(viewsets.ModelViewSet):
         self.serializer_class = UserRegistrationSerializer
         res = self.serializer_class(data=request.data)
         if res.is_valid():
-            res.save()
-            return Response({'token': ''}, status=status.HTTP_200_OK)
+            user = res.save()
+            return Response(get_user_token(user), status=status.HTTP_200_OK)
         return Response({'msg': res.errors}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -103,13 +108,38 @@ class WechatViewSet(viewsets.ModelViewSet):
         login_response = get_wechat_credential(request.data['code'])
         if 'errcode' in login_response:
             return Response({'msg': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
-        try:
-            openid = login_response['openid']
-            user = User.objects.get(userprofile__openid=openid)
-            return Response({'token': user.id}, status=status.HTTP_200_OK)
-        except User.DoesNotExist:
-            res = self.serializer_class(data=login_response)
+        res = self.serializer_class(data=login_response)
+        if res.is_valid():
+            user = res.save()
+            return Response(get_user_token(user), status=status.HTTP_200_OK)
+        return Response({'msg':res.errors}, status=status.HTTP_401_UNAUTHORIZED)
+
+    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, ])
+    def profile(self, request):
+        """
+        API for /api/wechat/profile.
+        """
+        user = request.user
+        if user.has_perm('auth.profile'):
+            self.serializer_class = UserProfileSerializer
+            res = self.serializer_class(instance=user, data=request.data)
             if res.is_valid():
                 res.save()
-                return Response({'token': ""}, status=status.HTTP_200_OK)
-        return Response({'msg': 'Unknown error'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'level': user.userprofile.level}, status=status.HTTP_200_OK)
+            return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'msg': 'Manager has no profile'}, status=status.HTTP_403_FORBIDDEN)
+
+    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, ])
+    def audio(self, request):
+        """
+        API for /api/wechat/audio.
+        """
+        user = request.user
+        if user.has_perm('auth.audio'):
+            self.serializer_class = UserAudioSerializer
+            res = self.serializer_class(data=request.data, context={'user': user})
+            if res.is_valid():
+                user_audio = res.save()
+                return Response({'score': user_audio.score}, status=status.HTTP_200_OK)
+            return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'msg': 'Manager has no audio'}, status=status.HTTP_403_FORBIDDEN)
