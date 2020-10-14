@@ -3,7 +3,7 @@ Serializers for media app
 """
 # pylint: disable=E5142, W0223, W0221, R0201
 from rest_framework import serializers
-from .models import OriginMedia, UserAudio
+from .models import OriginMedia
 
 
 class OriginMediaSerializer(serializers.ModelSerializer):
@@ -12,15 +12,6 @@ class OriginMediaSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = OriginMedia
-        fields = "__all__"
-
-
-class UserAudioSerializer(serializers.ModelSerializer):
-    """
-    serialize UserAudio data
-    """
-    class Meta:
-        model = UserAudio
         fields = "__all__"
 
 

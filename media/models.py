@@ -19,16 +19,6 @@ class OriginMedia(models.Model):
     video_path = models.FileField(max_length=256, upload_to='origin/video/')
 
 
-class UserAudio(models.Model):
-    """
-    model of user audio
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    origin = models.ForeignKey(OriginMedia, on_delete=models.CASCADE)
-    audio_path = models.FileField(max_length=256, upload_to='user/audio/')
-    score = models.FloatField()
-
-
 @receiver(pre_delete, sender=OriginMedia)
 def auto_delete_file_on_delete(instance: OriginMedia, **_):
     """

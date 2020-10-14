@@ -6,9 +6,9 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from .models import OriginMedia, UserAudio
-from .serializers import OriginMediaSerializer, UserAudioSerializer, \
-    SearchOriginSerializer, EditOriginSerializer
+from .models import OriginMedia
+from .serializers import OriginMediaSerializer, SearchOriginSerializer, EditOriginSerializer
+from django.shortcuts import redirect
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -66,30 +66,39 @@ class ManagerViewSets(viewsets.ModelViewSet):
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
-    def delete(self, request):
+    def video(self, request):
         """
-        delete an object from OriginMedia
-        TODO
+        return video file according to id
         """
-
-
-class ClientViewSets(viewsets.ModelViewSet):
-    """
-    actions on UserAudio
-    """
-    queryset = UserAudio.objects.all()
-    serializer_class = UserAudioSerializer
-
-    @action(detail=False, methods=['POST'])
-    def add(self, request):
-        """
-        add an object to UserAudio
-        TODO
-        """
+        self.serializer_class = SearchOriginSerializer
+        search_serializer = SearchOriginSerializer(data=request.data)
+        if search_serializer.is_valid():
+            data_id = request.data['id']
+            try:
+                media_data = OriginMedia.objects.get(pk=data_id)
+            except OriginMedia.DoesNotExist:
+                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+            media_serializer = OriginMediaSerializer(media_data)
+            video_path = media_serializer.data['video_path']
+            url = '/media/' + video_path
+            return redirect(url)
+        return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
-    def search(self, request):
+    def audio(self, request):
         """
-        search in UserAudio
-        TODO
+        return audio file according to id
         """
+        self.serializer_class = SearchOriginSerializer
+        search_serializer = SearchOriginSerializer(data=request.data)
+        if search_serializer.is_valid():
+            data_id = request.data['id']
+            try:
+                media_data = OriginMedia.objects.get(pk=data_id)
+            except OriginMedia.DoesNotExist:
+                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+            media_serializer = OriginMediaSerializer(media_data)
+            audio_path = media_serializer.data['audio_path']
+            url = '/media/' + audio_path
+            return redirect(url)
+        return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
