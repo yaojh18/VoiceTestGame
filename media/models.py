@@ -4,7 +4,6 @@ models for media app
 # pylint: disable=E5142
 import os
 from django.db import models
-from django.contrib.auth.models import User
 from django.db.models.signals import pre_delete, pre_save
 from django.dispatch import receiver
 

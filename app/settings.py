@@ -118,4 +118,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 # pylint: disable=C0413, W0611, E0401
-from config.database_settings import DATABASES
+from config.local_settings import DATABASES
