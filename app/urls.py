@@ -16,11 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.static import serve
-from app.settings import MEDIA_ROOT, MEDIA_URL
+from app.settings import MEDIA_ROOT, MEDIA_URL, STATIC_ROOT, STATIC_URL
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('personnel.urls')),
     path('api/', include('media.urls')),
-    re_path(MEDIA_URL + r'(?P<path>.*)/$', serve, {'document_root': MEDIA_ROOT})
+    re_path(MEDIA_URL + r'(?P<path>.*)/$', serve, {'document_root': MEDIA_ROOT}),
+    re_path(STATIC_URL + r'(?P<path>.*)$', serve, {'document_root':STATIC_ROOT}),
 ]
