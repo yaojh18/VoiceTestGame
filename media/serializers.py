@@ -52,3 +52,12 @@ class EditOriginSerializer(serializers.Serializer):
             data.video_path = self.data['video_path']
         data.save()
         return True
+
+
+class ListOriginSerializer(serializers.ModelSerializer):
+    """
+    serializer for list of data
+    """
+    class Meta:
+        model = OriginMedia
+        fields = ['id', 'title']
