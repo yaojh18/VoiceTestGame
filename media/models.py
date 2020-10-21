@@ -38,14 +38,10 @@ def auto_delete_file_on_delete(instance: OriginMedia, **_):
     """
     delete file from file system when the object is deleted
     """
-    print('pre_delete')
-    if instance.audio_path:
-        print('delete audio:', instance.audio_path)
-        if os.path.isfile(instance.audio_path.path):
-            os.remove(instance.audio_path.path)
-    if instance.video_path:
-        if os.path.isfile(instance.video_path.path):
-            os.remove(instance.video_path.path)
+    if instance.audio_path and os.path.isfile(instance.audio_path.path):
+        os.remove(instance.audio_path.path)
+    if instance.video_path and os.path.isfile(instance.video_path.path):
+        os.remove(instance.video_path.path)
 
 
 @receiver(pre_save, sender=OriginMedia)
@@ -66,10 +62,7 @@ def auto_delete_file_on_change(instance: OriginMedia, **_):
 
     video_new = instance.video_path
     audio_new = instance.audio_path
-    if not video_old == video_new:
-        if os.path.isfile(video_old.path):
-            print('delete video')
-            os.remove(video_old.path)
-    if not audio_old == audio_new:
-        if os.path.isfile(audio_old.path):
-            os.remove(audio_old.path)
+    if not video_old == video_new and os.path.isfile(video_old.path):
+        os.remove(video_old.path)
+    if not audio_old == audio_new and os.path.isfile(audio_old.path):
+        os.remove(audio_old.path)

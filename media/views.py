@@ -2,14 +2,14 @@
 Views of media app
 """
 # pylint: disable=E5142, R0901
-from django.shortcuts import redirect
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import OriginMedia
-from .serializers import OriginMediaSerializer, SearchOriginSerializer, EditOriginSerializer, ListOriginSerializer
+from .serializers import OriginMediaSerializer, SearchOriginSerializer,\
+    EditOriginSerializer, ListOriginSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -70,9 +70,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = search_serializer.data['id']
+            data_id = search_serializer.data['media_id']
             try:
-                media_data = OriginMedia.objects.get(pk=data_id)
+                media_data = OriginMedia.objects.get(media_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
@@ -87,15 +87,15 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = request.data['id']
+            data_id = request.data['media_id']
             try:
-                media_data = OriginMedia.objects.get(pk=data_id)
+                media_data = OriginMedia.objects.get(media_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
             video_path = media_serializer.data['video_path']
             url = video_path
-            return redirect(url)
+            return Response(url, status=status.HTTP_200_OK)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
@@ -106,15 +106,15 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = request.data['id']
+            data_id = request.data['media_id']
             try:
-                media_data = OriginMedia.objects.get(pk=data_id)
+                media_data = OriginMedia.objects.get(media_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
             audio_path = media_serializer.data['audio_path']
             url = audio_path
-            return redirect(url)
+            return Response(url, status=status.HTTP_200_OK)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
@@ -125,9 +125,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = request.data['id']
+            data_id = request.data['media_id']
             try:
-                media_data = OriginMedia.objects.get(pk=data_id)
+                media_data = OriginMedia.objects.get(media_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
