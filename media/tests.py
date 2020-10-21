@@ -5,8 +5,7 @@ Tests of media app
 import os
 import json
 from django.test import TestCase
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
 from .models import OriginMedia
 
 
@@ -33,54 +32,14 @@ class ManagerTest(TestCase):
     Unity tests of ManagerViewSets
     """
     def setUp(self):
-        user = ContentType.objects.get(model='user', app_label='auth')
-
-        add_media = Permission.objects.create(
-            content_type=user, codename='add_media', name="Can add new media")
-        update_media = Permission.objects.create(
-            content_type=user, codename='update_media', name='Can update existing media')
-        query_media = Permission.objects.create(
-            content_type=user, codename='query_media', name='Can query existing media')
-        profile = Permission.objects.create(
-            content_type=user, codename='profile', name='Have user profile')
-
-        manager = Group.objects.create(name='manager')
-        manager.permissions.add(add_media)
-        manager.permissions.add(query_media)
-        manager.permissions.add(update_media)
-        manager.save()
-
-        visitor = Group.objects.create(name='visitor')
-        visitor.permissions.add(query_media)
-        visitor.permissions.add(profile)
-        visitor.save()
-        response = self.registration('test', '123456', '123456')
+        Group.objects.create(name='manager')
+        Group.objects.create(name='visitor')
+        response = self.client.post('/api/users/registration/', data={
+            'username': 'test',
+            'password': '123456',
+            'password2': '123456'
+        }, content_type='application/json')
         self.token = json.loads(response.content)["token"]
-
-    def login(self, username=None, password=None):
-        """
-        Login method.
-        """
-        data = {
-            'username': username,
-            'password': password
-        }
-        return self.client.post('/api/users/login/', data=data,
-                                content_type='application/json')
-
-    def registration(self, username=None, password=None, password2=None, name=None):
-        """
-        Registration method.
-        """
-        data = {
-            'username': username,
-            'password': password,
-            'password2': password2
-        }
-        if name:
-            data['name'] = name
-        return self.client.post('/api/users/registration/', data=data,
-                                content_type='application/json')
 
     def search(self, data_id=None):
         """
@@ -126,7 +85,6 @@ class ManagerTest(TestCase):
         response = self.add(title='test1', content='test 1',
                             audio_path=audio_file,
                             video_path=video_file)
-        print(response.content)
         self.assertNotEqual(response.status_code, 201)
 
         audio_file, video_file = create_file()
