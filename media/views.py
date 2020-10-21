@@ -17,7 +17,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     actions on OriginMedia
     """
     queryset = OriginMedia.objects.all()
-    serializer_class = SearchOriginSerializer
+    serializer_class = OriginMediaSerializer
     permission_classes = [IsAuthenticated, ]
 
     def get_serializer_class(self):
