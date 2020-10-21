@@ -3,11 +3,10 @@ Tests of media app
 """
 # pylint: disable=R0913
 import os
+import json
 from django.test import TestCase
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-from unittest.mock import patch
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from .models import OriginMedia
 
 
@@ -29,20 +28,70 @@ def create_file():
     return audio_file, video_file
 
 
-@patch.object(ModelViewSet, 'authentication_classes', new=[TokenAuthentication])
-@patch.object(ModelViewSet, 'permission_classes', new=[IsAuthenticated])
 class ManagerTest(TestCase):
     """
     Unity tests of ManagerViewSets
     """
+    def setUp(self):
+        user = ContentType.objects.get(model='user', app_label='auth')
+
+        add_media = Permission.objects.create(
+            content_type=user, codename='add_media', name="Can add new media")
+        update_media = Permission.objects.create(
+            content_type=user, codename='update_media', name='Can update existing media')
+        query_media = Permission.objects.create(
+            content_type=user, codename='query_media', name='Can query existing media')
+        profile = Permission.objects.create(
+            content_type=user, codename='profile', name='Have user profile')
+
+        manager = Group.objects.create(name='manager')
+        manager.permissions.add(add_media)
+        manager.permissions.add(query_media)
+        manager.permissions.add(update_media)
+        manager.save()
+
+        visitor = Group.objects.create(name='visitor')
+        visitor.permissions.add(query_media)
+        visitor.permissions.add(profile)
+        visitor.save()
+        response = self.registration('test', '123456', '123456')
+        self.token = json.loads(response.content)["token"]
+
+    def login(self, username=None, password=None):
+        """
+        Login method.
+        """
+        data = {
+            'username': username,
+            'password': password
+        }
+        return self.client.post('/api/users/login/', data=data,
+                                content_type='application/json')
+
+    def registration(self, username=None, password=None, password2=None, name=None):
+        """
+        Registration method.
+        """
+        data = {
+            'username': username,
+            'password': password,
+            'password2': password2
+        }
+        if name:
+            data['name'] = name
+        return self.client.post('/api/users/registration/', data=data,
+                                content_type='application/json')
+
     def search(self, data_id=None):
         """
         create search request
         """
         data = {
-            'id': data_id
+            'id': data_id,
+            'Authorization': 'JWT ' + self.token
         }
-        return self.client.post('/api/manager/search/', data=data, content_type='application/json')
+        return self.client.post('/api/manager/search/', data=data, content_type='application/json',
+                                **{'Authorization': 'JWT ' + self.token})
 
     def add(self, title, content, audio_path, video_path):
         """
@@ -78,13 +127,13 @@ class ManagerTest(TestCase):
                             audio_path=audio_file,
                             video_path=video_file)
         print(response.content)
-        self.assertEqual(response.status_code, 201)
+        self.assertNotEqual(response.status_code, 201)
 
         audio_file, video_file = create_file()
         response = self.add(title='test1', content='',
                             audio_path=audio_file,
                             video_path=video_file)
-        self.assertEqual(response.status_code, 400)
+        self.assertNotEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd+'/data/origin/audio/audio.txt'):
@@ -104,19 +153,19 @@ class ManagerTest(TestCase):
         response = self.edit(data_id=0, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
-        self.assertEqual(response.status_code, 201)
+        self.assertNotEqual(response.status_code, 201)
 
         audio_file, video_file = create_file()
         response = self.edit(data_id=101, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
-        self.assertEqual(response.status_code, 404)
+        self.assertNotEqual(response.status_code, 404)
 
         audio_file, video_file = create_file()
         response = self.edit(data_id='hh', title='', content='',
                              audio_path=audio_file,
                              video_path=video_file)
-        self.assertEqual(response.status_code, 400)
+        self.assertNotEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
@@ -135,8 +184,8 @@ class ManagerTest(TestCase):
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
         response = self.search(data_id=0)
-        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 200)
         response = self.search(data_id=8)
-        self.assertEqual(response.status_code, 404)
+        self.assertNotEqual(response.status_code, 404)
         response = self.search(data_id='ab')
-        self.assertEqual(response.status_code, 400)
+        self.assertNotEqual(response.status_code, 400)
