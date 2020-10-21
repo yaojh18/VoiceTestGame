@@ -7,6 +7,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from .models import OriginMedia
 from .serializers import OriginMediaSerializer, SearchOriginSerializer, EditOriginSerializer, ListOriginSerializer
 
@@ -17,6 +18,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     """
     queryset = OriginMedia.objects.all()
     serializer_class = SearchOriginSerializer
+    permission_classes = [IsAuthenticated, ]
 
     def get_serializer_class(self):
         """
@@ -26,10 +28,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
             return OriginMediaSerializer
         if self.action == 'edit':
             return EditOriginSerializer
-        if self.action == 'return_list':
-            return SearchOriginSerializer
+        if self.action == 'get_list':
+            return ListOriginSerializer
         return SearchOriginSerializer
-
 
     @action(detail=False, methods=['POST'])
     def add(self, request):
@@ -136,7 +137,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['GET'])
-    def return_list(self, request):
+    def get_list(self, request):
         """
         return list of data
         """
