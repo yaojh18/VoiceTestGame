@@ -4,6 +4,10 @@ Tests of media app
 # pylint: disable=R0913
 import os
 from django.test import TestCase
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from unittest.mock import patch
 from .models import OriginMedia
 
 
@@ -25,6 +29,8 @@ def create_file():
     return audio_file, video_file
 
 
+@patch.object(ModelViewSet, 'authentication_classes', new=[TokenAuthentication])
+@patch.object(ModelViewSet, 'permission_classes', new=[IsAuthenticated])
 class ManagerTest(TestCase):
     """
     Unity tests of ManagerViewSets
@@ -71,6 +77,7 @@ class ManagerTest(TestCase):
         response = self.add(title='test1', content='test 1',
                             audio_path=audio_file,
                             video_path=video_file)
+        print(response.content)
         self.assertEqual(response.status_code, 201)
 
         audio_file, video_file = create_file()
@@ -91,10 +98,10 @@ class ManagerTest(TestCase):
         test edit method
         """
         audio_file, video_file = create_file()
-        OriginMedia.objects.create(title='test2', content='test 2',
-                                   audio_path='/media/origin/audio/test2.wav',
-                                   video_path='/media/origin/video/test2.mp4')
-        response = self.edit(data_id=1, title='test_edit', content='test edit',
+        OriginMedia.objects.create(title='test2', content='test 2', media_id=0,
+                                   audio_path='/data/origin/audio/test2.wav',
+                                   video_path='/data/origin/video/test2.mp4')
+        response = self.edit(data_id=0, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
         self.assertEqual(response.status_code, 201)
@@ -121,13 +128,13 @@ class ManagerTest(TestCase):
         """
         test search method
         """
-        OriginMedia.objects.create(title='test3', content='test 3',
-                                   audio_path='/media/origin/audio/test3.wav',
-                                   video_path='/media/origin/video/test3.mp4')
-        OriginMedia.objects.create(title='test4', content='test 4',
-                                   audio_path='/media/origin/audio/test4.wav',
-                                   video_path='/media/origin/video/test4.mp4')
-        response = self.search(data_id=1)
+        OriginMedia.objects.create(title='test3', content='test 3', media_id=0,
+                                   audio_path='/data/origin/audio/test3.wav',
+                                   video_path='/data/origin/video/test3.mp4')
+        OriginMedia.objects.create(title='test4', content='test 4', media_id=1,
+                                   audio_path='/data/origin/audio/test4.wav',
+                                   video_path='/data/origin/video/test4.mp4')
+        response = self.search(data_id=0)
         self.assertEqual(response.status_code, 200)
         response = self.search(data_id=8)
         self.assertEqual(response.status_code, 404)
