@@ -93,7 +93,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     province = serializers.CharField(source='userprofile.province', write_only=True)
     avatar_url = serializers.CharField(source='userprofile.avatar_url')
     score = serializers.IntegerField(source='userprofile.source', read_only=True)
-    user_id = serializers.IntegerField(source='id')
+    user_id = serializers.IntegerField(source='id',read_only=True)
 
     class Meta:
         model = User
