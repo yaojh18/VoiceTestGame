@@ -19,6 +19,7 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=128, null=True)
     province = models.CharField(max_length=128, null=True)
     level = models.IntegerField(default=0)
+    avatar_url = models.CharField(max_length=1024, null=True)
 
 
 class UserAudio(models.Model):
@@ -27,7 +28,7 @@ class UserAudio(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audios')
     media = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users')
-    audio = models.FileField(upload_to='users/audio')
+    audio = models.FileField(max_length=512, upload_to='users/audio')
     timestamp = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
 
