@@ -83,14 +83,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
-class UserProfileSerializer(serializers.Serializer):
+class UserProfileSerializer(serializers.ModelSerializer):
     """
     Determine the format of userporfile data when updating.
     """
     nick_name = serializers.CharField(source='first_name')
-    gender = serializers.CharField(source='userprofile.gender')
-    city = serializers.CharField(source='userprofile.city')
-    province = serializers.CharField(source='userprofile.province')
+    gender = serializers.CharField(source='userprofile.gender', write_only=True)
+    city = serializers.CharField(source='userprofile.city', write_only=True)
+    province = serializers.CharField(source='userprofile.province', write_only=True)
+    avatar_url = serializers.CharField(source='userprofile.avatar_url')
+    score = serializers.IntegerField(source='userprofile.source', read_only=True)
+    user_id = serializers.IntegerField(source='id')
+
+    class Meta:
+        model = User
+        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url', 'score']
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data['first_name']
@@ -98,6 +105,7 @@ class UserProfileSerializer(serializers.Serializer):
         profile.gender = validated_data['userprofile']['gender']
         profile.city = validated_data['userprofile']['city']
         profile.province = validated_data['userprofile']['province']
+        profile.avatar_url = validated_data['userprofile']['avatar_url']
         instance.save()
         profile.save()
         return instance
@@ -107,13 +115,15 @@ class UserAudioSerializer(serializers.ModelSerializer):
     """
     Determine the format of user audio data when writing.
     """
+    media_id = serializers.IntegerField(source='media')
+
     class Meta:
         model = UserAudio
-        fields = ['audio', 'media']
+        fields = ['audio', 'media_id']
 
     def create(self, validated_data):
         user = self.context['user']
-        user_audio = UserAudio(user=user, media=validated_data['media'])
+        user_audio = UserAudio(user=user, media_id=validated_data['media'])
         user_audio.audio.save(
             name=user_audio.get_audio_name(), content=validated_data['audio'])
         user_audio.save()
