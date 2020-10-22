@@ -6,6 +6,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
+from media.models import OriginMedia
 from .models import UserProfile, UserAudio
 
 
@@ -115,15 +116,17 @@ class UserAudioSerializer(serializers.ModelSerializer):
     """
     Determine the format of user audio data when writing.
     """
-    media_id = serializers.IntegerField(source='media')
+    media_id = serializers.IntegerField(source='media.media_id')
 
     class Meta:
         model = UserAudio
         fields = ['audio', 'media_id']
 
     def create(self, validated_data):
+        print(validated_data)
         user = self.context['user']
-        user_audio = UserAudio(user=user, media_id=validated_data['media'])
+        media = OriginMedia.objects.get(media_id=validated_data['media']['media_id'])
+        user_audio = UserAudio(user=user, media=media)
         user_audio.audio.save(
             name=user_audio.get_audio_name(), content=validated_data['audio'])
         user_audio.save()
