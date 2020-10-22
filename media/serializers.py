@@ -81,6 +81,7 @@ class ListOriginSerializer(serializers.ModelSerializer):
     """
     serializer for list of origin media data
     """
+
     class Meta:
         model = OriginMedia
         fields = ['media_id', 'title']

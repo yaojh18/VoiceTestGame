@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import OriginMedia
+from personnel.models import UserAudio
 from .serializers import OriginMediaSerializer, SearchOriginSerializer,\
     EditOriginSerializer, ListOriginSerializer
 
@@ -143,4 +144,13 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         self.serializer_class = ListOriginSerializer
         list_serializer = ListOriginSerializer(OriginMedia.objects.all(), many=True)
-        return Response(list_serializer.data, status=status.HTTP_200_OK)
+        data = self.generate_list(list_serializer)
+        return Response(data, status=status.HTTP_200_OK)
+
+    def generate_list(self, serializer):
+        titles = []
+        scores = []
+        for item in serializer.data:
+            titles.append(item['title'])
+            scores.append(0)
+        return {'titles': titles, 'scores': scores}
