@@ -48,22 +48,21 @@
 ### 音视频数据操作
 #### 添加
 - url: api/manager/add
-- request: 数据内容: {title(标题), content(文案), audio_file(音频文件), video_file(视频文件)}
+- request: 数据内容: {title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
 - response: 成功/失败信息
 #### 删除
 - url: api/manager/delete
-- request: 要删除数据的id
+- request: media_id(要删除数据的关卡id)
 - response: 成功/失败信息
 #### 修改
 - url: api/manager/edit
-- request: 要修改数据的id; 修改后数据的title(标题), content(文案), audio file(音频文件), video file(视频文件)
+- request: media_id(要修改数据的关卡id); title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)
 - response: 成功/失败信息
 #### 查询
 - url: api/manager/search
-- request: 关卡id
-- response: 数据内容：{title(标题), content(文案), audio_file_name(音频文件名), video_file_name(视频文件名)}
-- 此后可用/media系列url访问音视频文件
-- 管理平台可以暂时用这个，修改界面可以先只显示文件名，之后会再专门写一个可以下载文件的url
+- request: media_id(关卡id)
+- response: 数据内容：{title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
+- 关于管理平台的小建议：回放功能可以在界面贴一个url, 点击跳转到相应url即可在线播放视频/音频(仅供参考, 如果需要可以下载文件的接口我就再写一个)
 
 # 2020.10.6 姚季涵
 新增代码规范：
@@ -87,28 +86,34 @@
 返回值为json格式，包括状态码code，其中200表示成功，若成功则会返回一个token， 否则返回错误信息msg
 + 删除了前端分支，项目完全独立为后端部分，方便之后的开发与部署
 
-# 2020.10.10 李侔繁
-#### 音视频数据直接访问接口
-- 原版音频：/media/origin/audio/{音频文件名}
-- 视频：/media/origin/video/{视频文件名}
-- 音频和视频文件名可通过前述查询url返回，格式从/media开始(例如，返回音频文件名“/media/origin/audio/test1.wav”)
-- 注意：仅客户端可用，访问上述url可直接播放音频/视频，具体效果有待测试
-
 # 2020.10.14 李侔繁
 #### 单独返回音频接口
 - url: api/manager/audio
-- request: 关卡id
-- response: 音频文件
+- request: media_id(关卡id)
+- response: 音频文件url
 #### 单独返回视频接口
 - url: api/manager/video
-- request: 关卡id
-- response: 视频文件
+- request: media_id(关卡id)
+- response: 视频文件url
 #### 返回单条数据标题、文案
 - url: api/manager/material
-- request: 关卡id
+- request: media_id(关卡id)
 - response: {'title': 标题, 'text': 文案}
 
 # 2020.10.13 姚季涵
 + token验证的机制，更新后的token验证机制如下：
     + 前端登录后获取token，之后在访问其他API的时候请在header中添加：{'Authorization' : 'JWT ' + token}, 别问我，自带的token验证就是这样的，我懒得自己写格式了；
     + 后端除了登录注册界面都应限制访问，限制方法为permission_classes = [IsAuthenticated,], IsAuthenticated在rest_framework.permissions中，如果写在参数里面就是对该视图集所有的子路由采用这个验证方法， 否则也可以在action的参数里面添加，特定对某个子路由进行验证。
++ 微信更新用户数据接口：api/wechat/profile/，接受格式为application/json，参数包括"nick_name”,"city","province","gender"，均为必须项。
++ 微信上传用户数据接口：api/wechat/audio/,接受格式为multipart/form-data,参数包括"media_id"(媒体编号),"audio"音频文件，均为必须项。
+
+# 2020.10.21 李侔繁
+#### 返回音视频数据列表
+- url: api/manager/get_list
+- method: get, 不需要参数
+- response: list[{'media_id','title'}]
+
+# 2020.10.22 姚季涵
++ 修复了数据库无法存储中文的bug
++ 微信获取最高分用户列表接口：api/level/，接受格式为JSON，方法为GET，参数包括“media_id"。返回为json列表，每个元素包含'user_id','nick_name','avatar_url','score'
++ 微信获取某用户某评分最大值列表：api/level/audio，接受格式为JSON，方法为GET，参数包括'media_id','user_id'(不提供默认为当前登录的用户)。返回为json，包含'audio_url'
