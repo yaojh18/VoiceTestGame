@@ -160,7 +160,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             media_id = self.request.data['media_id']
         else:
             return User.objects.none()
-        user_ids = UserAudio.objects.filter(media_id=media_id).exclude(score=0)
+        user_ids = UserAudio.objects.filter(media__media_id=media_id).exclude(score=0)
         if user_ids is not None:
             user_ids = user_ids.order_by('score').values_list('user', flat=True).distinct()[:length]
             return User.objects.filter(id__in=user_ids)
@@ -177,7 +177,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             return Response({'msg': 'Please input the correct media_id'},
                             status=status.HTTP_404_NOT_FOUND)
         user_id = request.data['user_id'] if 'user_id' in request.data else request.user.id
-        user_audio = UserAudio.objects.filter(media_id=media_id, user_id=user_id).order_by('score').first()
+        user_audio = UserAudio.objects.filter(media__media_id=media_id, user_id=user_id).order_by('score').first()
         if user_audio is not None:
             return Response({'audio_url': user_audio.audio.url}, status=status.HTTP_200_OK)
         return Response({'msg': 'Please input the correct media_id'},

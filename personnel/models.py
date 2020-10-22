@@ -19,7 +19,7 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=128, null=True)
     province = models.CharField(max_length=128, null=True)
     level = models.IntegerField(default=0)
-    avatar_url = models.CharField(max_length=128, null=True)
+    avatar_url = models.CharField(max_length=1024, null=True)
 
 
 class UserAudio(models.Model):
