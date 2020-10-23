@@ -3,8 +3,11 @@ sys.path.extend([os.path.abspath(os.path.dirname(os.path.dirname(__file__)))])
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", 'app.settings')
 django.setup()
 
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
+from personnel.models import UserProfile
+from media.models import OriginMedia
+from django.core.files import File
 
 def init_group_and_permission():
     user = ContentType.objects.get(model='user', app_label='auth')
@@ -32,4 +35,21 @@ def init_group_and_permission():
     visitor.permissions.add(audio)
     visitor.save()
 
+def create_superuser():
+    try:
+        admin = User.objects.create_superuser(username='admin', password='123456')
+    except:
+        admin = User.objects.get(username='admin')
+    profile, created = UserProfile.objects.get_or_create(user=admin, openid='123456')
+    profile.save()
+
+
+create_superuser()
 init_group_and_permission()
+
+media = OriginMedia(level_id=1)
+with open('E:/Voice test game/data/test/大碗宽面.wav', 'rb') as f:
+    media.audio_path.save(name='大碗宽面.wav', content=File(f))
+
+with open('E:/Voice test game/data/test/大碗宽面.mp4', 'rb') as f:
+    media.video_path.save(name='大碗宽面.mp4', content=File(f))

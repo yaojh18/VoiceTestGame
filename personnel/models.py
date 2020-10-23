@@ -14,7 +14,7 @@ class UserProfile(models.Model):
     Add information for User.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
-    openid = models.CharField(max_length=128, null=True, unique=True)
+    openid = models.CharField(max_length=128, unique=True)
     gender = models.CharField(max_length=32, null=True)
     city = models.CharField(max_length=128, null=True)
     province = models.CharField(max_length=128, null=True)
@@ -26,14 +26,11 @@ class UserAudio(models.Model):
     """
     User audio information, identified by timestamp.
     """
+    def get_audio_name(self):
+        return self.user.username + '_' + self.level.title + 'wav'
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audios')
-    media = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users')
+    level = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users', to_field='level_id')
     audio = models.FileField(max_length=512, upload_to='users/audio')
     timestamp = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
-
-    def get_audio_name(self):
-        """
-        Uniform way to name a file.
-        """
-        return self.user.username + '_' + str(self.media.title) + '.wav'
