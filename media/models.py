@@ -12,22 +12,8 @@ class OriginMedia(models.Model):
     """
     model of original media
     """
-    # def media_id_default(self):
-    #     """
-    #     return default value of media_id
-    #     """
-    #     if OriginMedia.objects.count() == 0:
-    #         return 0
-    #     media_id_list = OriginMedia.objects.order_by('media_id').values_list('media_id')
-    #     num = 0
-    #     while True:
-    #         if media_id_list[num] != num:
-    #             break
-    #         num += 1
-    #     return num
-
-    media_id = models.IntegerField(unique=True, default=0)
-    title = models.CharField(max_length=64)
+    level_id = models.IntegerField(unique=True, db_index=True)
+    title = models.CharField(max_length=128)
     content = models.CharField(max_length=1024)  # 文案, 格式可能修改
     audio_path = models.FileField(max_length=256, upload_to='origin/audio/')
     video_path = models.FileField(max_length=256, upload_to='origin/video/')

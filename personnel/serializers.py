@@ -116,19 +116,18 @@ class UserAudioSerializer(serializers.ModelSerializer):
     """
     Determine the format of user audio data when writing.
     """
-    media_id = serializers.IntegerField(source='media.media_id')
+    level_id = serializers.IntegerField(source='level')
 
     class Meta:
         model = UserAudio
-        fields = ['audio', 'media_id']
+        fields = ['audio', 'level_id']
 
     def create(self, validated_data):
         print(validated_data)
         user = self.context['user']
-        media = OriginMedia.objects.get(media_id=validated_data['media']['media_id'])
-        user_audio = UserAudio(user=user, media=media)
-        user_audio.audio.save(
-            name=user_audio.get_audio_name(), content=validated_data['audio'])
+        level = OriginMedia.objects.get(level_id=validated_data['level'])
+        user_audio = UserAudio(user=user, level=level)
+        user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name())
         user_audio.save()
         return user_audio
 
