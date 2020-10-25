@@ -13,43 +13,42 @@ class OriginMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginMedia
         fields = "__all__"
-        read_only_fields = ['media_id']
+        # read_only_fields = ['level_id']
+        extra_kwargs = {
+            'level_id': {'allow_null': True},
+        }
 
     def create(self, validated_data):
-        validated_data['media_id'] = self.media_id_default()
+        validated_data['level_id'] = self.level_id_default()
         # print(validated_data)
         # media_obj = OriginMedia.objects.create(validated_data)
         return super().create(validated_data)
 
-    def media_id_default(self):
+    def level_id_default(self):
         """
-        return default value of media_id
+        return default value of level_id
         """
         if OriginMedia.objects.count() == 0:
             return 0
-        media_id_list = OriginMedia.objects.order_by('media_id').values_list('media_id')
+        level_id_list = OriginMedia.objects.order_by('level_id').values_list('level_id')
         num = 0
-        while True:
-            if OriginMedia.objects.count() == num:
-                return num
-            if media_id_list[num][0] != num:
-                break
+        while OriginMedia.objects.count() > num and level_id_list[num][0] == num:
             num += 1
-        return num+1
+        return num
 
 
 class SearchOriginSerializer(serializers.Serializer):
     """
         serialize search requests
         """
-    media_id = serializers.IntegerField(allow_null=True)
+    level_id = serializers.IntegerField(allow_null=True)
 
 
 class EditOriginSerializer(serializers.Serializer):
     """
     serialize edit requests
     """
-    media_id = serializers.IntegerField()
+    level_id = serializers.IntegerField()
     title = serializers.CharField(max_length=64, allow_null=True)
     content = serializers.CharField(max_length=1024, allow_null=True)
     audio_path = serializers.FileField(max_length=256, allow_null=True)
@@ -59,10 +58,10 @@ class EditOriginSerializer(serializers.Serializer):
         """
         update data
         """
-        if not self.data['media_id']:
+        if not self.data['level_id']:
             return False
         try:
-            data = OriginMedia.objects.get(media_id=self.data['media_id'])
+            data = OriginMedia.objects.get(level_id=self.data['level_id'])
         except OriginMedia.DoesNotExist:
             return False
         if self.data['title']:
@@ -84,4 +83,4 @@ class ListOriginSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        fields = ['media_id', 'title']
+        fields = ['level_id', 'title']

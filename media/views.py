@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import OriginMedia
-from .serializers import OriginMediaSerializer, SearchOriginSerializer,\
+from .serializers import OriginMediaSerializer, SearchOriginSerializer, \
     EditOriginSerializer, ListOriginSerializer
 
 
@@ -16,7 +16,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     """
     actions on OriginMedia
     """
-    queryset = OriginMedia.objects.all()
+    queryset = OriginMedia.objects.all().order_by('-level_id')
     serializer_class = OriginMediaSerializer
     permission_classes = [IsAuthenticated, ]
 
@@ -24,13 +24,17 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         Get serializer for different actions
         """
-        if self.action == 'add':
-            return OriginMediaSerializer
-        if self.action == 'edit':
-            return EditOriginSerializer
-        if self.action == 'get_list':
-            return ListOriginSerializer
-        return SearchOriginSerializer
+        # if self.action == 'add':
+        #     return OriginMediaSerializer
+        # if self.action == 'edit':
+        #     return EditOriginSerializer
+        # if self.action == 'get_list':
+        #     return ListOriginSerializer
+        # return SearchOriginSerializer
+        if self.action == 'search' or self.action == 'material' \
+                or self.action == 'video' or self.action == 'audio':
+            return SearchOriginSerializer
+        return OriginMediaSerializer
 
     @action(detail=False, methods=['POST'])
     def add(self, request):
@@ -70,9 +74,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = search_serializer.data['media_id']
+            data_id = search_serializer.data['level_id']
             try:
-                media_data = OriginMedia.objects.get(media_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
@@ -87,9 +91,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = request.data['media_id']
+            data_id = request.data['level_id']
             try:
-                media_data = OriginMedia.objects.get(media_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
@@ -106,9 +110,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = request.data['media_id']
+            data_id = request.data['level_id']
             try:
-                media_data = OriginMedia.objects.get(media_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
@@ -125,9 +129,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         self.serializer_class = SearchOriginSerializer
         search_serializer = SearchOriginSerializer(data=request.data)
         if search_serializer.is_valid():
-            data_id = request.data['media_id']
+            data_id = request.data['level_id']
             try:
-                media_data = OriginMedia.objects.get(media_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
             media_serializer = OriginMediaSerializer(media_data)
