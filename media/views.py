@@ -8,8 +8,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import OriginMedia
-from .serializers import OriginMediaSerializer, SearchOriginSerializer, \
-    EditOriginSerializer, ListOriginSerializer
+from .serializers import OriginMediaCreateSerializer, OriginMediaUpdateSerializer,\
+    SearchOriginSerializer, EditOriginSerializer, ListOriginSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -17,7 +17,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     actions on OriginMedia
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
-    serializer_class = OriginMediaSerializer
+    serializer_class = OriginMediaCreateSerializer
     permission_classes = [IsAuthenticated, ]
 
     def get_serializer_class(self):
@@ -31,18 +31,20 @@ class ManagerViewSets(viewsets.ModelViewSet):
         # if self.action == 'get_list':
         #     return ListOriginSerializer
         # return SearchOriginSerializer
-        if self.action == 'search' or self.action == 'material' \
-                or self.action == 'video' or self.action == 'audio':
+        if self.action == 'search':
             return SearchOriginSerializer
-        return OriginMediaSerializer
+        if self.action == 'create':
+            return OriginMediaCreateSerializer
+        if self.action == 'update':
+            return OriginMediaUpdateSerializer
 
     @action(detail=False, methods=['POST'])
     def add(self, request):
         """
         add an object to OriginMedia
         """
-        self.serializer_class = OriginMediaSerializer
-        media_serializer = OriginMediaSerializer(data=request.data)
+        self.serializer_class = OriginMediaCreateSerializer
+        media_serializer = OriginMediaCreateSerializer(data=request.data)
         if media_serializer.is_valid():
             media_serializer.save()
             return Response(media_serializer.data, status=status.HTTP_201_CREATED)
@@ -79,9 +81,30 @@ class ManagerViewSets(viewsets.ModelViewSet):
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaSerializer(media_data)
+            media_serializer = OriginMediaCreateSerializer(media_data)
             return Response(media_serializer.data, status=status.HTTP_200_OK)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClientMediaViewSets(viewsets.ModelViewSet):
+    """
+    actions on OriginMedia
+    """
+    queryset = OriginMedia.objects.all().order_by('level_id')
+    serializer_class = OriginMediaCreateSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_serializer_class(self):
+        """
+        Get serializer for different actions
+        """
+        if self.action == 'material' or self.action == 'video' \
+                or self.action == 'audio':
+            return SearchOriginSerializer
+        if self.action == 'create':
+            return OriginMediaCreateSerializer
+        if self.action == 'update':
+            return OriginMediaUpdateSerializer
 
     @action(detail=False, methods=['POST'])
     def video(self, request):
@@ -96,7 +119,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaSerializer(media_data)
+            media_serializer = OriginMediaCreateSerializer(media_data)
             video_path = media_serializer.data['video_path']
             url = video_path
             return Response(url, status=status.HTTP_200_OK)
@@ -115,7 +138,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaSerializer(media_data)
+            media_serializer = OriginMediaCreateSerializer(media_data)
             audio_path = media_serializer.data['audio_path']
             url = audio_path
             return Response(url, status=status.HTTP_200_OK)
@@ -134,7 +157,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaSerializer(media_data)
+            media_serializer = OriginMediaCreateSerializer(media_data)
             title = media_serializer.data['title']
             content = media_serializer.data['content']
             return Response({'title': title, 'text': content}, status=status.HTTP_200_OK)

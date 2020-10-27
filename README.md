@@ -1,3 +1,55 @@
+# 后端API列表
+### 管理平台
+#### 添加
+- url: api/manager
+- method: POST
+- request: 数据内容: {level_id(关卡号，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
+- response: 成功/失败信息
+#### 删除
+- url: api/manager/<id>
+- method: DELETE
+- response: 成功/失败信息
+#### 修改
+- url: api/manager/<id> (<id>为数据id)
+- method: PUT
+- request: dict{level_id(关卡id), title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)}
+    注：所有项都可为空，若为空则后端不会修改该项
+- response: 成功/失败信息
+#### 单条数据查询
+##### 根据数据id返回单条数据
+- url: api/manager/<id> (<id>为数据id)
+- method: GET
+- response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
+##### 根据关卡id返回单条数据
+- url: api/manager?level_id=<level_id> (<level_id>为关卡id)
+- method: GET
+- response: 请求的关卡id对应的一条数据: dict{id, level_id, title, content, audio_path, video_path}
+#### 数据列表
+- url: api/manager
+- method: GET
+- response: list[dict{id, level_id, title}] (由dict组成的列表)
+
+### 音视频数据：小程序客户端
+#### 单独返回音频接口
+- url: api/media/audio
+- method: POST
+- request: media_id(关卡id)
+- response: 音频文件url
+#### 单独返回视频接口
+- url: api/media/video
+- method: POST
+- request: media_id(关卡id)
+- response: 视频文件url
+#### 返回单条数据标题、文案
+- url: api/media/material
+- method: POST
+- request: media_id(关卡id)
+- response: dict{'title': 标题, 'text': 文案}
+#### 关卡列表
+- url: api/media
+- method: GET
+- response: dict{'media_id','title','score'} 每一项为一个列表
+
 # init
  大概就是仿照monolithic-example做的，前端还是一片空白，表示我并不会加，同志们加油。
  两个requirements和requirements_dev版本号并不是最终版，这里只是简单的拷贝了一下。
@@ -119,27 +171,4 @@
 + 微信获取某用户某评分最大值列表：api/level/audio，接受格式为JSON，方法为GET，参数包括'media_id','user_id'(不提供默认为当前登录的用户)。返回为json，包含'audio_url'
 
 # 2020.10.28 李侔繁
-重构音视频数据库接口，修改后API接口如下
-#### 添加
-- url: api/manager
-- method: POST
-- request: 数据内容: {level_id(关卡号，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
-- response: 成功/失败信息
-#### 删除
-- url: api/manager/delete
-- request: media_id(要删除数据的关卡id)
-- response: 成功/失败信息
-#### 修改
-- url: api/manager/edit
-- request: media_id(要修改数据的关卡id); title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)
-- response: 成功/失败信息
-#### 查询
-##### 根据数据id返回单条信息
-- url: api/manager/<id> (<id>为数据id)
-- method: GET
-- response: dict{id(), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
-
-- url: api/manager/search
-- request: media_id(关卡id)
-- response: 数据内容：{title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
-- 关于管理平台的小建议：回放功能可以在界面贴一个url, 点击跳转到相应url即可在线播放视频/音频(仅供参考, 如果需要可以下载文件的接口我就再写一个)
+重构音视频数据库接口，更新后API见上方

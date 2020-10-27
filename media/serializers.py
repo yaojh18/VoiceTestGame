@@ -6,7 +6,7 @@ from rest_framework import serializers
 from .models import OriginMedia
 
 
-class OriginMediaSerializer(serializers.ModelSerializer):
+class OriginMediaCreateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
@@ -36,6 +36,37 @@ class OriginMediaSerializer(serializers.ModelSerializer):
         while OriginMedia.objects.count() > num and level_id_list[num][0] == num:
             num += 1
         return num
+
+
+class OriginMediaUpdateSerializer(serializers.ModelSerializer):
+    """
+    serialize OriginMedia data
+    """
+    class Meta:
+        model = OriginMedia
+        fields = "__all__"
+        # read_only_fields = ['level_id']
+        extra_kwargs = {
+            'level_id': {'allow_null': True},
+            'title': {'allow_null': True},
+            'content': {'allow_null': True},
+            'audio_path': {'allow_null': True},
+            'video_path': {'allow_null': True},
+        }
+
+    def update(self, instance, validated_data):
+        if validated_data['level_id']:
+            instance.title = validated_data['level_id']
+        if validated_data['title']:
+            instance.title = validated_data['title']
+        if validated_data['content']:
+            instance.content = validated_data['content']
+        if validated_data['audio_path']:
+            instance.audio_path = validated_data['audio_path']
+        if validated_data['video_path']:
+            instance.video_path = validated_data['video_path']
+        instance.save()
+        return instance
 
 
 class SearchOriginSerializer(serializers.Serializer):
