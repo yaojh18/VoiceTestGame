@@ -16,7 +16,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     """
     actions on OriginMedia
     """
-    queryset = OriginMedia.objects.all().order_by('-level_id')
+    queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = OriginMediaSerializer
     permission_classes = [IsAuthenticated, ]
 

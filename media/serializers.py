@@ -19,7 +19,8 @@ class OriginMediaSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        validated_data['level_id'] = self.level_id_default()
+        if not validated_data['level_id']:
+            validated_data['level_id'] = self.level_id_default()
         # print(validated_data)
         # media_obj = OriginMedia.objects.create(validated_data)
         return super().create(validated_data)

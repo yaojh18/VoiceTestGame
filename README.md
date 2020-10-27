@@ -117,3 +117,29 @@
 + 修复了数据库无法存储中文的bug
 + 微信获取最高分用户列表接口：api/level/，接受格式为JSON，方法为GET，参数包括“media_id"。返回为json列表，每个元素包含'user_id','nick_name','avatar_url','score'
 + 微信获取某用户某评分最大值列表：api/level/audio，接受格式为JSON，方法为GET，参数包括'media_id','user_id'(不提供默认为当前登录的用户)。返回为json，包含'audio_url'
+
+# 2020.10.28 李侔繁
+重构音视频数据库接口，修改后API接口如下
+#### 添加
+- url: api/manager
+- method: POST
+- request: 数据内容: {level_id(关卡号，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
+- response: 成功/失败信息
+#### 删除
+- url: api/manager/delete
+- request: media_id(要删除数据的关卡id)
+- response: 成功/失败信息
+#### 修改
+- url: api/manager/edit
+- request: media_id(要修改数据的关卡id); title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)
+- response: 成功/失败信息
+#### 查询
+##### 根据数据id返回单条信息
+- url: api/manager/<id> (<id>为数据id)
+- method: GET
+- response: dict{id(), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
+
+- url: api/manager/search
+- request: media_id(关卡id)
+- response: 数据内容：{title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
+- 关于管理平台的小建议：回放功能可以在界面贴一个url, 点击跳转到相应url即可在线播放视频/音频(仅供参考, 如果需要可以下载文件的接口我就再写一个)
