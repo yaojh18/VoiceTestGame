@@ -27,10 +27,14 @@ class UserAudio(models.Model):
     User audio information, identified by timestamp.
     """
     def get_audio_name(self):
+        """
+        get audio name
+        """
         return self.user.username + '_' + self.level.title + 'wav'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audios')
-    level = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users', to_field='level_id')
+    level = models.ForeignKey(OriginMedia, on_delete=models.CASCADE,
+                              related_name='users', to_field='level_id')
     audio = models.FileField(max_length=512, upload_to='users/audio')
     timestamp = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
