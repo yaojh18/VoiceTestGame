@@ -105,7 +105,7 @@ class ManagerTest(TestCase):
         test edit method
         """
         audio_file, video_file = create_file()
-        OriginMedia.objects.create(title='test2', content='test 2', media_id=0,
+        OriginMedia.objects.create(title='test2', content='test 2', level_id=0,
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
         response = self.edit(data_id=0, title='test_edit', content='test edit',
@@ -135,10 +135,10 @@ class ManagerTest(TestCase):
         """
         test search method
         """
-        OriginMedia.objects.create(title='test3', content='test 3', media_id=0,
+        OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
                                    audio_path='/data/origin/audio/test3.wav',
                                    video_path='/data/origin/video/test3.mp4')
-        OriginMedia.objects.create(title='test4', content='test 4', media_id=1,
+        OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
         response = self.search(data_id=0)

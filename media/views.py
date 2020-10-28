@@ -1,17 +1,17 @@
 """
 Views of media app
 """
-# pylint: disable=E5142, R0901
+# pylint: disable=E5142, R0901, E1101
 from django.db.models import Max
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .models import OriginMedia
 from personnel.models import UserAudio
+from .models import OriginMedia
 from .serializers import OriginMediaCreateSerializer, OriginMediaUpdateSerializer,\
-    SearchOriginSerializer, EditOriginSerializer, ListOriginSerializer
+    SearchOriginSerializer, EditOriginSerializer, OriginMediaListSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -38,6 +38,8 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         if self.action == 'search':
             return SearchOriginSerializer
+        if self.action == 'list':
+            return OriginMediaListSerializer
         if self.action == 'create':
             return OriginMediaCreateSerializer
         if self.action == 'update':
@@ -108,7 +110,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
                 or self.action == 'audio':
             return SearchOriginSerializer
         if self.action == 'list':
-            return ListOriginSerializer
+            return OriginMediaListSerializer
         return OriginMediaCreateSerializer
 
     @action(detail=False, methods=['POST'])
@@ -173,15 +175,13 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         """
         return list of data
         """
-        self.serializer_class = ListOriginSerializer
-        list_serializer = ListOriginSerializer(OriginMedia.objects.all(), many=True)
+        self.serializer_class = OriginMediaListSerializer
+        list_serializer = OriginMediaListSerializer(OriginMedia.objects.all(), many=True)
         return Response(list_serializer.data, status=status.HTTP_200_OK)
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request):
         response = super().list(request)
         user_id = self.request.user
-        # print(user)
-        # return response
         titles = []
         scores = []
         for item in response.data:

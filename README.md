@@ -3,16 +3,16 @@
 #### 添加
 - url: api/manager
 - method: POST
-- request: 数据内容: {level_id(关卡号，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
+- request: 数据内容: {level_id(关卡id，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
 - response: 成功/失败信息
 #### 删除
-- url: api/manager/<id>
+- url: api/manager/<id> (<id>为数据id)
 - method: DELETE
 - response: 成功/失败信息
 #### 修改
 - url: api/manager/<id> (<id>为数据id)
 - method: PUT
-- request: dict{level_id(关卡id), title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)}
+- request: dict{level_id(关卡id), title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)} \
     注：所有项都可为空，若为空则后端不会修改该项
 - response: 成功/失败信息
 #### 单条数据查询
@@ -48,7 +48,7 @@
 #### 关卡列表
 - url: api/media
 - method: GET
-- response: dict{'media_id','title','score'} 每一项为一个列表
+- response: dict{'titles','score'} 每一项为一个列表
 
 # init
  大概就是仿照monolithic-example做的，前端还是一片空白，表示我并不会加，同志们加油。

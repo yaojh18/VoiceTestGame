@@ -4,7 +4,6 @@ Serializers for media app
 # pylint: disable=E5142, W0223, W0221, R0201
 from rest_framework import serializers
 from .models import OriginMedia
-from personnel.models import UserAudio
 
 
 class OriginMediaCreateSerializer(serializers.ModelSerializer):
@@ -14,7 +13,6 @@ class OriginMediaCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginMedia
         fields = "__all__"
-        # read_only_fields = ['level_id']
         extra_kwargs = {
             'level_id': {'allow_null': True},
         }
@@ -22,8 +20,6 @@ class OriginMediaCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if not validated_data['level_id']:
             validated_data['level_id'] = self.level_id_default()
-        # print(validated_data)
-        # media_obj = OriginMedia.objects.create(validated_data)
         return super().create(validated_data)
 
     def level_id_default(self):
@@ -109,20 +105,11 @@ class EditOriginSerializer(serializers.Serializer):
         return True
 
 
-class ListOriginSerializer(serializers.ModelSerializer):
+class OriginMediaListSerializer(serializers.ModelSerializer):
     """
     serializer for list of origin media data
     """
 
     class Meta:
         model = OriginMedia
-        fields = ['id', 'title']
-
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     titles = []
-    #     scores = []
-    #     for item in data:
-    #         titles.append(item['title'])
-    #         scores.append(0)
-    #     return {'titles': titles, 'scores': scores}
+        fields = ['id', 'level_id', 'title']
