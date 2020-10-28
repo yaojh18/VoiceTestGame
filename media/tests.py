@@ -39,18 +39,31 @@ class ManagerTest(TestCase):
             'password': '123456',
             'password2': '123456'
         }, content_type='application/json')
+        response = self.client.post('/api/users/login/', data={
+            'username': 'test',
+            'password': '123456',
+        }, content_type='application/json')
         self.token = json.loads(response.content)["token"]
+        # print("token:", self.token)
 
     def search(self, data_id=None):
         """
         create search request
         """
+        response = self.client.post('/api/users/login/', data={
+            'username': 'test',
+            'password': '123456',
+        }, content_type='application/json')
+        self.token = json.loads(response.content)["token"]
         data = {
             'id': data_id,
+        }
+        header = {
             'Authorization': 'JWT ' + self.token
         }
         return self.client.post('/api/manager/search/', data=data, content_type='application/json',
-                                **{'Authorization': 'JWT ' + self.token})
+                                authorization='JWT ' + self.token)
+        # , ** {'Authorization': 'JWT ' + self.token}
 
     def add(self, title, content, audio_path, video_path):
         """
@@ -142,8 +155,9 @@ class ManagerTest(TestCase):
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
         response = self.search(data_id=0)
-        self.assertNotEqual(response.status_code, 200)
+        print(response.content)
+        self.assertEqual(response.status_code, 200)
         response = self.search(data_id=8)
-        self.assertNotEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
         response = self.search(data_id='ab')
-        self.assertNotEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)

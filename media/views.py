@@ -20,6 +20,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = OriginMediaCreateSerializer
+    list_serializer = OriginMediaListSerializer
     permission_classes = [IsAuthenticated, ]
 
     def get_queryset(self):
@@ -29,6 +30,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
         queryset = OriginMedia.objects.all().order_by('level_id')
         level = self.request.query_params.get('level_id', None)
         if level is not None:
+            self.list_serializer = OriginMediaCreateSerializer
             queryset = queryset.filter(level_id=level)
         return queryset
 
@@ -39,7 +41,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
         if self.action == 'search':
             return SearchOriginSerializer
         if self.action == 'list':
-            return OriginMediaListSerializer
+            return self.list_serializer
         if self.action == 'create':
             return OriginMediaCreateSerializer
         if self.action == 'update':
@@ -186,11 +188,10 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         scores = []
         for item in response.data:
             titles.append(item['title'])
-            user_audio = UserAudio.objects.filter(user=user_id, level=item['id'])
-            if user_audio.count() == 0:
+            user_audio = UserAudio.objects.filter(user=user_id, media=item['id'])
+            score = user_audio.aggregate(score=Max('score'))['score']
+            if score is None:
                 score = 0
-            else:
-                score = user_audio.aggregate(Max('score'))
             scores.append(score)
         response.data = {'titles': titles, 'score': scores}
         return response
