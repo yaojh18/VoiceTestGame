@@ -23,7 +23,7 @@
 ##### 根据关卡id返回单条数据
 - url: api/manager?level_id=<level_id> (<level_id>为关卡id)
 - method: GET
-- response: 请求的关卡id对应的一条数据: dict{id, level_id, title, content, audio_path, video_path}
+- response: 请求的关卡id对应的一条数据: list[dict{id, level_id, title, content, audio_path, video_path}] (list内只含一条数据)
 #### 数据列表
 - url: api/manager
 - method: GET

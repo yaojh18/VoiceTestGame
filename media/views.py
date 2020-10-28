@@ -2,41 +2,47 @@
 Views of media app
 """
 # pylint: disable=E5142, R0901
+from django.db.models import Max
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import OriginMedia
+from personnel.models import UserAudio
 from .serializers import OriginMediaCreateSerializer, OriginMediaUpdateSerializer,\
     SearchOriginSerializer, EditOriginSerializer, ListOriginSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
     """
-    actions on OriginMedia
+    API on api/manager, media data access of for manager
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = OriginMediaCreateSerializer
     permission_classes = [IsAuthenticated, ]
 
+    def get_queryset(self):
+        """
+        Get queryset
+        """
+        queryset = OriginMedia.objects.all().order_by('level_id')
+        level = self.request.query_params.get('level_id', None)
+        if level is not None:
+            queryset = queryset.filter(level_id=level)
+        return queryset
+
     def get_serializer_class(self):
         """
         Get serializer for different actions
         """
-        # if self.action == 'add':
-        #     return OriginMediaSerializer
-        # if self.action == 'edit':
-        #     return EditOriginSerializer
-        # if self.action == 'get_list':
-        #     return ListOriginSerializer
-        # return SearchOriginSerializer
         if self.action == 'search':
             return SearchOriginSerializer
         if self.action == 'create':
             return OriginMediaCreateSerializer
         if self.action == 'update':
             return OriginMediaUpdateSerializer
+        return OriginMediaUpdateSerializer
 
     @action(detail=False, methods=['POST'])
     def add(self, request):
@@ -88,7 +94,7 @@ class ManagerViewSets(viewsets.ModelViewSet):
 
 class ClientMediaViewSets(viewsets.ModelViewSet):
     """
-    actions on OriginMedia
+    API on api/media, media data access for client
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = OriginMediaCreateSerializer
@@ -101,10 +107,9 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         if self.action == 'material' or self.action == 'video' \
                 or self.action == 'audio':
             return SearchOriginSerializer
-        if self.action == 'create':
-            return OriginMediaCreateSerializer
-        if self.action == 'update':
-            return OriginMediaUpdateSerializer
+        if self.action == 'list':
+            return ListOriginSerializer
+        return OriginMediaCreateSerializer
 
     @action(detail=False, methods=['POST'])
     def video(self, request):
@@ -170,16 +175,22 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         """
         self.serializer_class = ListOriginSerializer
         list_serializer = ListOriginSerializer(OriginMedia.objects.all(), many=True)
-        data = self.generate_list(list_serializer)
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(list_serializer.data, status=status.HTTP_200_OK)
 
-    def generate_list(self, serializer):
-        """
-        change the format of list
-        """
+    def list(self, request, *args, **kwargs):
+        response = super().list(request)
+        user_id = self.request.user
+        # print(user)
+        # return response
         titles = []
         scores = []
-        for item in serializer.data:
+        for item in response.data:
             titles.append(item['title'])
-            scores.append(0)
-        return {'titles': titles, 'scores': scores}
+            user_audio = UserAudio.objects.filter(user=user_id, level=item['id'])
+            if user_audio.count() == 0:
+                score = 0
+            else:
+                score = user_audio.aggregate(Max('score'))
+            scores.append(score)
+        response.data = {'titles': titles, 'score': scores}
+        return response
