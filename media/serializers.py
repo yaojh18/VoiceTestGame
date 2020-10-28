@@ -87,7 +87,7 @@ class EditOriginSerializer(serializers.Serializer):
         """
         update data
         """
-        if not self.data['level_id']:
+        if self.data['level_id'] is None:
             return False
         try:
             data = OriginMedia.objects.get(level_id=self.data['level_id'])

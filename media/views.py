@@ -42,9 +42,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
             return SearchOriginSerializer
         if self.action == 'list':
             return self.list_serializer
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'add':
             return OriginMediaCreateSerializer
-        if self.action == 'update':
+        if self.action == 'update' or self.action == 'edit':
             return OriginMediaUpdateSerializer
         return OriginMediaUpdateSerializer
 
@@ -73,7 +73,6 @@ class ManagerViewSets(viewsets.ModelViewSet):
             if edit_res:
                 return Response(search_serializer.data, status=status.HTTP_201_CREATED)
             return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-        # print('edit:400', search_serializer.errors)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # pylint: disable=R0201, R1710
