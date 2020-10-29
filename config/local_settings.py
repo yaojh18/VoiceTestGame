@@ -4,7 +4,6 @@ DATABASES = {
     }
 }
 
-WEAPP_URL = ''
 WEAPP_ID = ''
 WEAPP_SECRETE = ''
 
