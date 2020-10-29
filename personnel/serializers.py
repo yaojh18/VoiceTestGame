@@ -94,10 +94,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     province = serializers.CharField(source='userprofile.province', write_only=True)
     avatar_url = serializers.CharField(source='userprofile.avatar_url')
     user_id = serializers.IntegerField(source='id',read_only=True)
+    score = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url']
+        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url', 'score']
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data['first_name']

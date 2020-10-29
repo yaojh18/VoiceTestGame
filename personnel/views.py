@@ -193,14 +193,13 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         """
         user = self.request.user
         params = self.request.query_params
-        if user.has_perm('auth.audio'):
+        if user.has_perm('auth.audio') and 'level_id' in params:
             length = params.get('length', default=5)
-            if 'level_id' in params:
-                media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
-                if media_id is not None:
-                    users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
-                    if users is not None:
-                        return users.order_by('score')[:length]
+            media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
+            if media_id is not None:
+                users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
+                if users is not None:
+                    return users.order_by('score')[:length]
         return User.objects.none()
 
     @action(detail=False, methods=['GET'])
@@ -210,12 +209,11 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         """
         user = self.request.user
         params = self.request.query_params
-        if user.has_perm('auth.audio'):
-            if 'level_id' in params:
-                media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
-                if media_id is not None:
-                    user_id = params.get('user_id', default=user.id)
-                    user_audio = UserAudio.objects.filter(media_id=media_id, user_id=user_id).order_by('-score').first()
-                    if user_audio is not None:
-                        return Response({'audio_url': user_audio.audio.url}, status=status.HTTP_200_OK)
+        if user.has_perm('auth.audio') and 'level_id' in params:
+            media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
+            if media_id is not None:
+                user_id = params.get('user_id', default=user.id)
+                user_audio = UserAudio.objects.filter(media_id=media_id, user_id=user_id).order_by('-score').first()
+                if user_audio is not None:
+                    return Response({'audio_url': user_audio.audio.url}, status=status.HTTP_200_OK)
         return Response({'msg': 'Please input the correct level_id'},status=status.HTTP_404_NOT_FOUND)
