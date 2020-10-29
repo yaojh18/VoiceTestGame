@@ -39,24 +39,30 @@ class ManagerTest(TestCase):
             'password': '123456',
             'password2': '123456'
         }, content_type='application/json')
+        # response = self.client.post('/api/users/login/', data={
+        #     'username': 'test',
+        #     'password': '123456',
+        # }, content_type='application/json')
         self.token = json.loads(response.content)["token"]
+        # print("token:", self.token)
 
     def search(self, data_id=None):
         """
         create search request
         """
+        self.client.login(username='test', password='123456')
         data = {
-            'id': data_id,
-            'Authorization': 'JWT ' + self.token
+            'level_id': data_id,
         }
-        return self.client.post('/api/manager/search/', data=data, content_type='application/json',
-                                **{'Authorization': 'JWT ' + self.token})
+        return self.client.post('/api/manager/search/', data=data, content_type='application/json')
 
     def add(self, title, content, audio_path, video_path):
         """
         create add request
         """
+        self.client.login(username='test', password='123456')
         data = {
+            'level_id': '',
             'title': title,
             'content': content,
             'audio_path': audio_path,
@@ -68,8 +74,9 @@ class ManagerTest(TestCase):
         """
         create edit request
         """
+        self.client.login(username='test', password='123456')
         data = {
-            'id': data_id,
+            'level_id': data_id,
             'title': title,
             'content': content,
             'audio_path': audio_path,
@@ -85,13 +92,14 @@ class ManagerTest(TestCase):
         response = self.add(title='test1', content='test 1',
                             audio_path=audio_file,
                             video_path=video_file)
-        self.assertNotEqual(response.status_code, 201)
+        # print(response.content)
+        self.assertEqual(response.status_code, 201)
 
         audio_file, video_file = create_file()
         response = self.add(title='test1', content='',
                             audio_path=audio_file,
                             video_path=video_file)
-        self.assertNotEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd+'/data/origin/audio/audio.txt'):
@@ -99,46 +107,54 @@ class ManagerTest(TestCase):
         if os.path.isfile(cwd + '/data/origin/video/video.txt'):
             os.remove(cwd+'/data/origin/video/video.txt')
         # os.rmdir(cwd+'/data/test/')
-    """
+
     def test_edit(self):
+        """
+        test edit method
+        """
         audio_file, video_file = create_file()
-        OriginMedia.objects.create(title='test2', content='test 2', media_id=0,
+        OriginMedia.objects.create(title='test2', content='test 2', level_id=0,
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
+        # print(OriginMedia.objects.values())
         response = self.edit(data_id=0, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
-        self.assertNotEqual(response.status_code, 201)
+        # print(response.content)
+        self.assertEqual(response.status_code, 201)
 
         audio_file, video_file = create_file()
         response = self.edit(data_id=101, title='test_edit', content='test edit',
                              audio_path=audio_file,
                              video_path=video_file)
-        self.assertNotEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
 
         audio_file, video_file = create_file()
         response = self.edit(data_id='hh', title='', content='',
                              audio_path=audio_file,
                              video_path=video_file)
-        self.assertNotEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
             os.remove(cwd + '/data/origin/audio/audio.txt')
         if os.path.isfile(cwd + '/data/origin/video/video.txt'):
             os.remove(cwd + '/data/origin/video/video.txt')
-            
+
     def test_search(self):
-        OriginMedia.objects.create(title='test3', content='test 3', media_id=0,
+        """
+        test search method
+        """
+        OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
                                    audio_path='/data/origin/audio/test3.wav',
                                    video_path='/data/origin/video/test3.mp4')
-        OriginMedia.objects.create(title='test4', content='test 4', media_id=1,
+        OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
         response = self.search(data_id=0)
-        self.assertNotEqual(response.status_code, 200)
+        # print(response.content)
+        self.assertEqual(response.status_code, 200)
         response = self.search(data_id=8)
-        self.assertNotEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)
         response = self.search(data_id='ab')
-        self.assertNotEqual(response.status_code, 400)
-    """
+        self.assertEqual(response.status_code, 400)

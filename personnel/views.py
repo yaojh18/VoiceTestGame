@@ -9,7 +9,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
-from config.local_settings import WEAPP_ID, WEAPP_SECRETE
+from django.db.models import Max
+from config.local_settings import WEAPP_URL, WEAPP_ID, WEAPP_SECRETE, APP_URL, APP_ID, APP_SECRET
+from media.models import OriginMedia
 from .models import UserAudio
 from .serializers import UserInfoSerializer, UserLoginSerializer, \
     UserRegistrationSerializer, UserProfileSerializer, WechatLoginSerializer, \
@@ -26,15 +28,35 @@ def get_wechat_credential(code):
     Get openid from backend of Wechat,
     using url:https://api.weixin.qq.com/sns/jscode2session.
     """
-    auth_url = 'https://api.weixin.qq.com/sns/jscode2session'
-    params = dict()
-    params['appid'] = WEAPP_ID
-    params['secret'] = WEAPP_SECRETE
-    params['js_code'] = code
-    params['grant_type'] = 'authorization_code'
-    login_response = requests.get(auth_url, params=params)
+    login_response = requests.get(WEAPP_URL, params={
+        'appid': WEAPP_ID,
+        'secret': WEAPP_SECRETE,
+        'js_code': code,
+        'grant_type': 'authorization_code'
+    })
     login_response = login_response.json()
     return login_response
+
+
+def get_audio_credential():
+    """
+    Get score from audio backend.
+    """
+    response = requests.post(APP_URL + '/interface/auxiliary/getSpeakerId', json={
+        "id_type": "1",
+        "id_number": "130982200005248419",
+        "app_id": APP_ID,
+        "secret": APP_SECRET
+    })
+    speaker_id = response.json()['speakerId']
+    response = requests.post(APP_URL + '/interface/text/training/get', json={
+        'speaker_id': speaker_id,
+        'text_type': "4113",
+        'app_id': APP_ID,
+        'secret': APP_SECRET
+    })
+    session_id = response.json()['session_id']
+    print(session_id)
 
 
 def get_user_token(user):
@@ -50,7 +72,12 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     Define API under api/user/ .
     """
-    serializer_class = UserInfoSerializer
+    def get_serializer_class(self):
+        if self.action == 'login':
+            return UserLoginSerializer
+        if self.action == 'registration':
+            return  UserRegistrationSerializer
+        return UserInfoSerializer
 
     def get_queryset(self):
         """
@@ -65,8 +92,8 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         API for api/user/login
         """
-        self.serializer_class = UserLoginSerializer
-        res = UserLoginSerializer(data=request.data)
+
+        res = self.get_serializer_class()(data=request.data)
         if res.is_valid():
             token = get_user_token(res.instance)
             return Response(token, status=status.HTTP_200_OK)
@@ -77,8 +104,7 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         API for api/user/registration
         """
-        self.serializer_class = UserRegistrationSerializer
-        res = self.serializer_class(data=request.data)
+        res = self.get_serializer_class()(data=request.data)
         if res.is_valid():
             user = res.save()
             return Response(get_user_token(user), status=status.HTTP_200_OK)
@@ -89,8 +115,15 @@ class WechatViewSet(viewsets.ModelViewSet):
     """
     Define API for /api/wechat/.
     """
-    serializer_class = WechatLoginSerializer
-
+    def get_serializer_class(self):
+        """
+        Get serializer class automatically.
+        """
+        if self.action == 'profile':
+            return UserProfileSerializer
+        if self.action == 'audio':
+            return UserAudioSerializer
+        return WechatLoginSerializer
     def get_queryset(self):
         """
         Get queryset automatically.
@@ -98,6 +131,7 @@ class WechatViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser:
             return User.objects.all()
         return User.objects.none()
+
 
     @action(detail=False, methods=['POST'])
     def login(self, request):
@@ -107,7 +141,7 @@ class WechatViewSet(viewsets.ModelViewSet):
         login_response = get_wechat_credential(request.data['code'])
         if 'errcode' in login_response:
             return Response({'msg': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
-        res = self.serializer_class(data=login_response)
+        res = self.get_serializer_class()(data=login_response)
         if res.is_valid():
             user = res.save()
             return Response(get_user_token(user), status=status.HTTP_200_OK)
@@ -120,11 +154,13 @@ class WechatViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         if user.has_perm('auth.profile'):
-            self.serializer_class = UserProfileSerializer
-            res = self.serializer_class(instance=user, data=request.data)
+            res = self.get_serializer_class()(instance=user, data=request.data)
             if res.is_valid():
                 res.save()
-                return Response({'level': user.userprofile.level}, status=status.HTTP_200_OK)
+                level = user.audios.aggregate(level=Max('media__level_id'))
+                if level['level'] is None:
+                    level['level'] = 0
+                return Response(level, status=status.HTTP_200_OK)
             return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
         return Response({'msg': 'Manager has no profile'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -135,8 +171,7 @@ class WechatViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         if user.has_perm('auth.audio'):
-            self.serializer_class = UserAudioSerializer
-            res = self.serializer_class(data=request.data, context={'user': user})
+            res = self.get_serializer_class()(data=request.data, context={'user': user})
             if res.is_valid():
                 user_audio = res.save()
                 return Response({'score': user_audio.score}, status=status.HTTP_200_OK)
@@ -150,20 +185,22 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated, ]
+    http_method_names = ['get']
 
     def get_queryset(self):
         """
         Get queryset automatically.
         """
-        length = self.request.data['length'] if 'length' in self.request.data else 5
-        if 'level_id' in self.request.data:
-            level_id = self.request.data['level_id']
-        else:
-            return User.objects.none()
-        user_ids = UserAudio.objects.filter(level_id=level_id).order_by('score')
-        if user_ids is not None:
-            user_ids = user_ids.values_list('user', flat=True).distinct()[:length]
-            return User.objects.filter(id__in=user_ids)
+        user = self.request.user
+        params = self.request.query_params
+        if user.has_perm('auth.audio'):
+            length = params.get('length', default=5)
+            if 'level_id' in params:
+                media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
+                if media_id is not None:
+                    users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
+                    if users is not None:
+                        return users.order_by('score')[:length]
         return User.objects.none()
 
     @action(detail=False, methods=['GET'])
@@ -171,14 +208,14 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         """
         API for /api/level/audio
         """
-        if 'level_id' in request.data:
-            level_id = request.data['level_id']
-        else:
-            return Response({'msg': 'Please input the correct media_id'},
-                            status=status.HTTP_404_NOT_FOUND)
-        user_id = request.data['user_id'] if 'user_id' in request.data else request.user.id
-        user_audio = UserAudio.objects.filter(level_id=level_id, user_id=user_id).order_by('score').first()
-        if user_audio is not None:
-            return Response({'audio_url': user_audio.audio.url}, status=status.HTTP_200_OK)
-        return Response({'msg': 'Please input the correct media_id'},
-                        status=status.HTTP_404_NOT_FOUND)
+        user = self.request.user
+        params = self.request.query_params
+        if user.has_perm('auth.audio'):
+            if 'level_id' in params:
+                media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
+                if media_id is not None:
+                    user_id = params.get('user_id', default=user.id)
+                    user_audio = UserAudio.objects.filter(media_id=media_id, user_id=user_id).order_by('-score').first()
+                    if user_audio is not None:
+                        return Response({'audio_url': user_audio.audio.url}, status=status.HTTP_200_OK)
+        return Response({'msg': 'Please input the correct level_id'},status=status.HTTP_404_NOT_FOUND)

@@ -1,3 +1,55 @@
+# 后端API列表
+### 管理平台
+#### 添加
+- url: api/manager
+- method: POST
+- request: 数据内容: {level_id(关卡id，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
+- response: 成功/失败信息
+#### 删除
+- url: api/manager/<id> (<id>为数据id)
+- method: DELETE
+- response: 成功/失败信息
+#### 修改
+- url: api/manager/<id> (<id>为数据id)
+- method: PUT
+- request: dict{level_id(关卡id), title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)} \
+    注：所有项都可为空，若为空则后端不会修改该项
+- response: 成功/失败信息
+#### 单条数据查询
+##### 根据数据id返回单条数据
+- url: api/manager/<id> (<id>为数据id)
+- method: GET
+- response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
+##### 根据关卡id返回单条数据
+- url: api/manager?level_id=<level_id> (<level_id>为关卡id)
+- method: GET
+- response: 请求的关卡id对应的一条数据: list[dict{id, level_id, title, content, audio_path, video_path}] (list内只含一条数据)
+#### 数据列表
+- url: api/manager
+- method: GET
+- response: list[dict{id, level_id, title}] (由dict组成的列表)
+
+### 音视频数据：小程序客户端
+#### 单独返回音频接口
+- url: api/media/audio
+- method: POST
+- request: media_id(关卡id)
+- response: 音频文件url
+#### 单独返回视频接口
+- url: api/media/video
+- method: POST
+- request: media_id(关卡id)
+- response: 视频文件url
+#### 返回单条数据标题、文案
+- url: api/media/material
+- method: POST
+- request: media_id(关卡id)
+- response: dict{'title': 标题, 'text': 文案}
+#### 关卡列表
+- url: api/media
+- method: GET
+- response: dict{'titles','score'} 每一项为一个列表
+
 # init
  大概就是仿照monolithic-example做的，前端还是一片空白，表示我并不会加，同志们加油。
  两个requirements和requirements_dev版本号并不是最终版，这里只是简单的拷贝了一下。
@@ -117,3 +169,13 @@
 + 修复了数据库无法存储中文的bug
 + 微信获取最高分用户列表接口：api/level/，接受格式为JSON，方法为GET，参数包括“media_id"。返回为json列表，每个元素包含'user_id','nick_name','avatar_url','score'
 + 微信获取某用户某评分最大值列表：api/level/audio，接受格式为JSON，方法为GET，参数包括'media_id','user_id'(不提供默认为当前登录的用户)。返回为json，包含'audio_url'
+
+# 2020.10.28 李侔繁
+重构音视频数据库接口，更新后API见上方
+
+# 2020.10.28 姚季涵
++ 在进行含外键的数据库的结构调整时首先应该清空相应数据库的内容。
++ 重构了查询逻辑，优化了查询效果
++ 重构了数据库，使之具有更好的查询效果
++ 阅读API文档，但是失败了
++ 补充了新增接口的权限逻辑
