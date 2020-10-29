@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
 from django.db.models import Max
-from config.local_settings import WEAPP_URL, WEAPP_ID, WEAPP_SECRETE, APP_URL, APP_ID, APP_SECRET
+from config.local_settings import WEAPP_ID, WEAPP_SECRETE, APP_URL, APP_ID, APP_SECRET
 from media.models import OriginMedia
 from .models import UserAudio
 from .serializers import UserInfoSerializer, UserLoginSerializer, \
@@ -28,7 +28,7 @@ def get_wechat_credential(code):
     Get openid from backend of Wechat,
     using url:https://api.weixin.qq.com/sns/jscode2session.
     """
-    login_response = requests.get(WEAPP_URL, params={
+    login_response = requests.get('https://api.weixin.qq.com/sns/jscode2session', params={
         'appid': WEAPP_ID,
         'secret': WEAPP_SECRETE,
         'js_code': code,
