@@ -20,5 +20,10 @@ DATABASES = {
         }
     }
 }'''
+WEAPP_URL = 'https://api.weixin.qq.com/sns/jscode2session'
 WEAPP_ID = 'wxcec8955125bd6732'
 WEAPP_SECRETE = 'd26321578e183029be05d63ac982a660'
+
+APP_URL = 'http://zentao.c-smb.com:23101'
+APP_ID = '13001000002000000000010'
+APP_SECRET = '260542ef8e56432d88d179400a73edf9'

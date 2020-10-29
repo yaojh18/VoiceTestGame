@@ -11,8 +11,7 @@ from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer
 from media.models import OriginMedia
 from .serializers import WechatLoginSerializer
 from .models import UserProfile
-RESPONSE_TYPE = 'application/json'
-# Create your tests here.
+
 
 class LogTest(TestCase):
     """
@@ -49,8 +48,7 @@ class LogTest(TestCase):
             'username': username,
             'password': password
         }
-        return self.client.post('/api/users/login/', data=data,
-                                content_type=RESPONSE_TYPE)
+        return self.client.post('/api/users/login/', data=data)
 
     def registration(self, username=None, password=None, password2=None, name=None):
         """
@@ -63,8 +61,7 @@ class LogTest(TestCase):
         }
         if name:
             data['name'] = name
-        return self.client.post('/api/users/registration/', data=data,
-                                content_type=RESPONSE_TYPE)
+        return self.client.post('/api/users/registration/', data=data)
 
     def login_for_wechat(self, session_id=None):
         """
@@ -73,8 +70,7 @@ class LogTest(TestCase):
         data = {
             "code": session_id
         }
-        return self.client.post('/api/wechat/login/', data=data,
-                                content_type=RESPONSE_TYPE)
+        return self.client.post('/api/wechat/login/', data=data)
 
     def test_registration(self):
         """
@@ -141,9 +137,71 @@ class WechatTest(TestCase):
         user = User.objects.create_superuser(username='admin', password='123456')
         profile = UserProfile(user=user)
         profile.save()
-        media = OriginMedia(title="大碗宽面")
+        media = OriginMedia(title="大碗宽面", level_id=0)
         audio = open('data/test/大碗宽面.wav', 'rb+')
         video = open('data/test/大碗宽面.mp4', 'rb+')
-        media.video_path.save(name='大碗宽面', content=File(video))
-        media.audio_path.save(name='大碗宽面', content=File(audio))
+        media.video_path.name = '大碗宽面.mp4'
+        media.video_path.content = File(video)
+        media.audio_path.name = '大碗宽面.wav'
+        media.audio_path.content = File(audio)
         media.save()
+        video.close()
+        audio.close()
+        self.client.login(username='admin', password='123456')
+
+    def insert_user_audio(self):
+        """
+        Insert an user audio.
+        """
+        audio = open('data/test/大碗宽面.wav', 'rb+')
+        data = {
+            'level_id': 0,
+            'audio': audio
+        }
+        response = self.client.post('/api/wechat/audio/', data=data)
+        audio.close()
+        return response
+
+    def test_profile(self):
+        """
+        Test API for /api/wechat/profile/.
+        """
+        data = {
+            'gender': 'male',
+            'nick_name': 'yao123',
+            'city': 'beijing',
+            'province': 'beijing',
+            'avatar_url': 'https://baidu.com/'
+        }
+        response = self.client.post('/api/wechat/profile/', data=data)
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_audio(self):
+        """
+        Test API for /api/wechat/audio/.
+        """
+        response = self.insert_user_audio()
+        self.assertEqual(response.status_code, 200)
+
+    def test_level(self):
+        """
+        Test API for /api/level/.
+        """
+        self.insert_user_audio()
+        data = {
+            'level_id': 0
+        }
+        response = self.client.get('/api/level/', data=data)
+        self.assertEqual(response.status_code, 200)
+
+    def test_level_audio(self):
+        """
+        Test API for /api/level/audio/.
+        """
+        self.insert_user_audio()
+        data = {
+            'level_id': 0
+        }
+        response = self.client.get('/api/level/audio/', data=data)
+        self.assertEqual(response.status_code, 200)

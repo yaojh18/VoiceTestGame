@@ -36,8 +36,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'name', 'email', 'is_superuser', 'is_staff',
-                  'is_active', 'date_joined', 'last_login', 'groups']
+        fields = ['id', 'username', 'password', 'name', 'email', 'is_superuser',
+                    'date_joined', 'last_login', 'groups']
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -93,12 +93,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     city = serializers.CharField(source='userprofile.city', write_only=True)
     province = serializers.CharField(source='userprofile.province', write_only=True)
     avatar_url = serializers.CharField(source='userprofile.avatar_url')
-    score = serializers.IntegerField(source='userprofile.source', read_only=True)
     user_id = serializers.IntegerField(source='id',read_only=True)
 
     class Meta:
         model = User
-        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url', 'score']
+        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url']
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data['first_name']
@@ -116,17 +115,16 @@ class UserAudioSerializer(serializers.ModelSerializer):
     """
     Determine the format of user audio data when writing.
     """
-    level_id = serializers.IntegerField(source='level')
+    level_id = serializers.IntegerField()
 
     class Meta:
         model = UserAudio
         fields = ['audio', 'level_id']
 
     def create(self, validated_data):
-        print(validated_data)
         user = self.context['user']
-        level = OriginMedia.objects.get(level_id=validated_data['level'])
-        user_audio = UserAudio(user=user, level=level)
+        media = OriginMedia.objects.get(level_id=validated_data['level_id'])
+        user_audio = UserAudio(user=user, media=media)
         user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name())
         user_audio.save()
         return user_audio
@@ -137,8 +135,8 @@ class WechatLoginSerializer(serializers.Serializer):
     Login designed for wechat
     """
     openid = serializers.CharField(required=True, source='userprofile.openid')
-    username = serializers.CharField(max_length=128, required=False)
-    password = serializers.CharField(max_length=128, required=False)
+    username = serializers.CharField(max_length=128, required=False, read_only=True)
+    password = serializers.CharField(max_length=128, required=False, read_only=True)
 
     def validate(self, attrs):
         res = dict()
