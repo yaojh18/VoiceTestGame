@@ -18,7 +18,6 @@ class UserProfile(models.Model):
     gender = models.CharField(max_length=32, null=True)
     city = models.CharField(max_length=128, null=True)
     province = models.CharField(max_length=128, null=True)
-    level = models.IntegerField(default=0)
     avatar_url = models.CharField(max_length=1024, null=True)
 
 
@@ -27,10 +26,13 @@ class UserAudio(models.Model):
     User audio information, identified by timestamp.
     """
     def get_audio_name(self):
-        return self.user.username + '_' + self.level.title + 'wav'
+        """
+        Automatically generate audio name.
+        """
+        return self.user.username + '_' + self.media.title + '.wav'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audios')
-    level = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users', to_field='level_id')
+    media = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users')
     audio = models.FileField(max_length=512, upload_to='users/audio')
     timestamp = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
