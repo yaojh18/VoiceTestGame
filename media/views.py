@@ -15,7 +15,7 @@ from .serializers import OriginMediaCreateSerializer, OriginMediaUpdateSerialize
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
-    """
+    """~
     API on api/manager, media data access of for manager
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
@@ -47,52 +47,6 @@ class ManagerViewSets(viewsets.ModelViewSet):
         if self.action == 'update' or self.action == 'edit':
             return OriginMediaUpdateSerializer
         return OriginMediaUpdateSerializer
-
-    @action(detail=False, methods=['POST'])
-    def add(self, request):
-        """
-        add an object to OriginMedia
-        """
-        self.serializer_class = OriginMediaCreateSerializer
-        media_serializer = OriginMediaCreateSerializer(data=request.data)
-        if media_serializer.is_valid():
-            media_serializer.save()
-            return Response(media_serializer.data, status=status.HTTP_201_CREATED)
-        # print('add:400', media_serializer.errors)
-        return Response(media_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['POST'])
-    def edit(self, request):
-        """
-        edit an object in OriginMedia
-        """
-        self.serializer_class = EditOriginSerializer
-        search_serializer = EditOriginSerializer(data=request.data)
-        if search_serializer.is_valid():
-            edit_res = search_serializer.update_data()
-            if edit_res:
-                return Response(search_serializer.data, status=status.HTTP_201_CREATED)
-            return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-        return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # pylint: disable=R0201, R1710
-    # these shouldn't be disabled.
-    @action(detail=False, methods=['POST'])
-    def search(self, request):
-        """
-        search in OriginMedia according to id
-        """
-        self.serializer_class = SearchOriginSerializer
-        search_serializer = SearchOriginSerializer(data=request.data)
-        if search_serializer.is_valid():
-            data_id = search_serializer.data['level_id']
-            try:
-                media_data = OriginMedia.objects.get(level_id=data_id)
-            except OriginMedia.DoesNotExist:
-                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaCreateSerializer(media_data)
-            return Response(media_serializer.data, status=status.HTTP_200_OK)
-        return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ClientMediaViewSets(viewsets.ModelViewSet):
@@ -187,7 +141,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         scores = []
         for item in response.data:
             titles.append(item['title'])
-            user_audio = UserAudio.objects.filter(user=user_id, media=item['id'])
+            user_audio = UserAudio.objects.filter(user=user_id, level=item['id'])
             score = user_audio.aggregate(score=Max('score'))['score']
             if score is None:
                 score = 0
