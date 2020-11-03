@@ -30,8 +30,18 @@ class ManagerViewSets(viewsets.ModelViewSet):
         queryset = OriginMedia.objects.all().order_by('level_id')
         level = self.request.query_params.get('level_id', None)
         if level is not None:
-            self.list_serializer = OriginMediaCreateSerializer
+            # self.list_serializer = OriginMediaCreateSerializer
             queryset = queryset.filter(level_id=level)
+        name = self.request.query_params.get('title', None)
+        if name is not None:
+            # self.list_serializer = OriginMediaCreateSerializer
+            queryset = queryset.filter(title__icontains=name)
+        page_limit = self.request.query_params.get('page_limit', None)
+        if page_limit is not None:
+            page_start = self.request.query_params.get('page_start', 0)
+            page_start = max(page_start, queryset.count())
+            page_end = max(page_start+page_limit, queryset.count())
+            queryset = queryset[page_start:page_end]
         return queryset
 
     def get_serializer_class(self):
@@ -125,15 +135,6 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
             return Response({'title': title, 'text': content}, status=status.HTTP_200_OK)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['GET'])
-    def get_list(self, request):
-        """
-        return list of data
-        """
-        self.serializer_class = OriginMediaListSerializer
-        list_serializer = OriginMediaListSerializer(OriginMedia.objects.all(), many=True)
-        return Response(list_serializer.data, status=status.HTTP_200_OK)
-
     def list(self, request):
         response = super().list(request)
         user_id = self.request.user
@@ -148,3 +149,4 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
             scores.append(score)
         response.data = {'titles': titles, 'score': scores}
         return response
+
