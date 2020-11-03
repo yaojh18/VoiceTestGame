@@ -208,8 +208,8 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
     serializer_class = UserAudioAnalysisSerializer
     queryset = UserAudio.objects.all()
 
-    def list(self, request):
-        queryset = self.queryset
+    def get_queryset(self):
+        queryset = UserAudio.objects.all()
         level = self.request.query_params.get('level', None)
         gender = self.request.query_params.get('gender', None)
         # min_time = queryset.aggregate(timestamp=Min('timestamp'))['timestamp']
@@ -232,4 +232,4 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
             queryset = queryset.order_by('media__level_id')
         if sort == "time":
             queryset = queryset.order_by('timestamp')
-
+        return queryset

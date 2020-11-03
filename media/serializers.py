@@ -111,7 +111,17 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
     """
     serializer for user audio data analysis
     """
+    level_id = serializers.IntegerField()
 
     class Meta:
         model = UserAudio
         fields = "__all__"
+        extra_kwargs = {
+            'media': {'write_only': True}
+        }
+
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        level = OriginMedia.objects.get(id=value['media']).level_id
+        value['level_id'] = level
+        return value
