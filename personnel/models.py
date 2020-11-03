@@ -33,8 +33,7 @@ class UserAudio(models.Model):
         return self.user.username + '_' + self.level.title + 'wav'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audios')
-    level = models.ForeignKey(OriginMedia, on_delete=models.CASCADE,
-                              related_name='users', to_field='level_id')
+    media = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users')
     audio = models.FileField(max_length=512, upload_to='users/audio')
     timestamp = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
