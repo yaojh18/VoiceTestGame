@@ -89,6 +89,7 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = OriginMedia
+        fields = "__all__"
 
 
 class UserAnalysisSerializer(serializers.ModelSerializer):

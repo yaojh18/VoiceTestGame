@@ -11,7 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
 from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
-    MediaListSerializer, MediaSearchSerializer
+    MediaListSerializer, MediaSearchSerializer, MediaAnalysisSerializer, \
+    UserAnalysisSerializer, UserAudioAnalysisSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -149,24 +150,60 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         return response
 
 
-class DataViewSets(viewsets.ModelViewSet):
+class MediaDataViewSets(viewsets.ModelViewSet):
     """
     API on api/manager/data, data analysis for manager
     """
     permission_classes = [IsAuthenticated, ]
+    queryset = OriginMedia.objects.all().order_by('level_id')
+    serializer_class = MediaAnalysisSerializer
+
+    def get_queryset(self):
+        """
+        Get queryset
+        """
+        queryset = OriginMedia.objects.all().order_by('level_id')
+        title = self.request.query_params.get('title', None)
+        if title is not None:
+            queryset = queryset.filter(title__icontains=title)
+        page_limit = self.request.query_params.get('page_limit', None)
+        if page_limit is not None:
+            page_limit = int(page_limit)
+            page_start = int(self.request.query_params.get('page_start', 0))
+            page_start = min(page_start, queryset.count())
+            page_end = min(page_start+page_limit, queryset.count())
+            queryset = queryset.all()[page_start:page_end]
+            print(page_start,page_end)
+        return queryset
 
 
+class UserDataViewSets(viewsets.ModelViewSet):
+    """
+    API on api/manager/data/user, data analysis of user data for manager
+    """
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = UserAnalysisSerializer
+    queryset = UserProfile.objects.all()
+
+    def get_queryset(self):
+        """
+        get queryset
+        """
+        queryset = UserProfile.objects.all()
+        sort = self.request.query_params.get('sort', None)
+        gender = self.request.query_params.get('gender', None)
+        if sort == "level":
+            queryset = queryset.order_by('level')
+        if gender == "male":
+            queryset = queryset.filter(gender='male')
+        if gender == "female":
+            queryset = queryset.filter(gender='female')
+        return queryset
 
 
-# class UserDataViewSets(viewsets.ModelViewSet):
-#     """
-#     API on api/manager/data/user, data analysis of user data for manager
-#     """
-#     permission_classes = [IsAuthenticated, ]
-#
-#
-# class UserAudioDataViewSets(viewsets.ModelViewSet):
-#     """
-#     API on api/manager/data/user_audio, data analysis of user data for manager
-#     """
-#     permission_classes = [IsAuthenticated, ]
+class UserAudioDataViewSets(viewsets.ModelViewSet):
+    """
+    API on api/manager/data/user_audio, data analysis of user data for manager
+    """
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = UserAudioAnalysisSerializer
