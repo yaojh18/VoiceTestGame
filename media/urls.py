@@ -7,9 +7,10 @@ import media.views as views
 router = DefaultRouter()
 router.register('manager', views.ManagerViewSets, basename='manager')
 router.register('media', views.ClientMediaViewSets, basename='media')
-router.register('manager/data/media', views.MediaDataViewSets, basename='manager/data/media')
-router.register('manager/data/user', views.UserDataViewSets, basename='manager/data/user')
-router.register('manager/data/user_audio', views.UserAudioDataViewSets, basename='manager/data/user_audio')
+# router.register('manager/data/media', views.MediaDataViewSets, basename='manager/data/media')
+# router.register('manager/data/user', views.UserDataViewSets, basename='manager/data/user')
+# router.register('manager/data/user_audio', views.UserAudioDataViewSets, basename='manager/data/user_audio')
+router.register('manager/data', views.DataViewSets, basename='manager/data')
 
 urlpatterns = []
 urlpatterns += router.urls

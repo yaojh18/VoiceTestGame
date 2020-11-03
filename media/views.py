@@ -10,8 +10,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
-from .serializers import OriginMediaCreateSerializer, OriginMediaUpdateSerializer,\
-    SearchOriginSerializer, EditOriginSerializer, OriginMediaListSerializer
+from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
+    MediaListSerializer, MediaSearchSerializer
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -19,8 +19,8 @@ class ManagerViewSets(viewsets.ModelViewSet):
     API on api/manager, media data access of for manager
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
-    serializer_class = OriginMediaCreateSerializer
-    list_serializer = OriginMediaListSerializer
+    serializer_class = MediaCreateSerializer
+    list_serializer = MediaListSerializer
     permission_classes = [IsAuthenticated, ]
 
     def get_queryset(self):
@@ -48,15 +48,13 @@ class ManagerViewSets(viewsets.ModelViewSet):
         """
         Get serializer for different actions
         """
-        if self.action == 'search':
-            return SearchOriginSerializer
         if self.action == 'list':
             return self.list_serializer
-        if self.action == 'create' or self.action == 'add':
-            return OriginMediaCreateSerializer
-        if self.action == 'update' or self.action == 'edit':
-            return OriginMediaUpdateSerializer
-        return OriginMediaUpdateSerializer
+        if self.action == 'create':
+            return MediaCreateSerializer
+        if self.action == 'update':
+            return MediaUpdateSerializer
+        return MediaUpdateSerializer
 
 
 class ClientMediaViewSets(viewsets.ModelViewSet):
@@ -64,7 +62,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
     API on api/media, media data access for client
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
-    serializer_class = OriginMediaCreateSerializer
+    serializer_class = MediaCreateSerializer
     permission_classes = [IsAuthenticated, ]
 
     def get_serializer_class(self):
@@ -73,25 +71,25 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         """
         if self.action == 'material' or self.action == 'video' \
                 or self.action == 'audio':
-            return SearchOriginSerializer
+            return MediaSearchSerializer
         if self.action == 'list':
-            return OriginMediaListSerializer
-        return OriginMediaCreateSerializer
+            return MediaListSerializer
+        return MediaCreateSerializer
 
     @action(detail=False, methods=['POST'])
     def video(self, request):
         """
         return video file according to id
         """
-        self.serializer_class = SearchOriginSerializer
-        search_serializer = SearchOriginSerializer(data=request.data)
+        self.serializer_class = MediaSearchSerializer
+        search_serializer = MediaSearchSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = request.data['level_id']
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaCreateSerializer(media_data)
+            media_serializer = MediaCreateSerializer(media_data)
             video_path = media_serializer.data['video_path']
             url = video_path
             return Response(url, status=status.HTTP_200_OK)
@@ -102,15 +100,15 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         """
         return audio file according to id
         """
-        self.serializer_class = SearchOriginSerializer
-        search_serializer = SearchOriginSerializer(data=request.data)
+        self.serializer_class = MediaSearchSerializer
+        search_serializer = MediaSearchSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = request.data['level_id']
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaCreateSerializer(media_data)
+            media_serializer = MediaCreateSerializer(media_data)
             audio_path = media_serializer.data['audio_path']
             url = audio_path
             return Response(url, status=status.HTTP_200_OK)
@@ -121,15 +119,15 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         """
         return title and content according to id
         """
-        self.serializer_class = SearchOriginSerializer
-        search_serializer = SearchOriginSerializer(data=request.data)
+        self.serializer_class = MediaSearchSerializer
+        search_serializer = MediaSearchSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = request.data['level_id']
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
                 return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
-            media_serializer = OriginMediaCreateSerializer(media_data)
+            media_serializer = MediaCreateSerializer(media_data)
             title = media_serializer.data['title']
             content = media_serializer.data['content']
             return Response({'title': title, 'text': content}, status=status.HTTP_200_OK)
@@ -151,19 +149,24 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         return response
 
 
-class MediaDataViewSets(viewsets.ModelViewSet):
+class DataViewSets(viewsets.ModelViewSet):
     """
-    API on api/manager/data/media, data analysis of media data for manager
+    API on api/manager/data, data analysis for manager
     """
+    permission_classes = [IsAuthenticated, ]
 
 
-class UserDataViewSets(viewsets.ModelViewSet):
-    """
-    API on api/manager/data/user, data analysis of user data for manager
-    """
 
 
-class UserAudioDataViewSets(viewsets.ModelViewSet):
-    """
-    API on api/manager/data/user_audio, data analysis of user data for manager
-    """
+# class UserDataViewSets(viewsets.ModelViewSet):
+#     """
+#     API on api/manager/data/user, data analysis of user data for manager
+#     """
+#     permission_classes = [IsAuthenticated, ]
+#
+#
+# class UserAudioDataViewSets(viewsets.ModelViewSet):
+#     """
+#     API on api/manager/data/user_audio, data analysis of user data for manager
+#     """
+#     permission_classes = [IsAuthenticated, ]

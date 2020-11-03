@@ -3,10 +3,11 @@ Serializers for media app
 """
 # pylint: disable=E5142, W0223, W0221, R0201
 from rest_framework import serializers
+from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
 
 
-class OriginMediaCreateSerializer(serializers.ModelSerializer):
+class MediaCreateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
@@ -35,7 +36,7 @@ class OriginMediaCreateSerializer(serializers.ModelSerializer):
         return num
 
 
-class OriginMediaUpdateSerializer(serializers.ModelSerializer):
+class MediaUpdateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
@@ -66,50 +67,44 @@ class OriginMediaUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SearchOriginSerializer(serializers.Serializer):
+class MediaListSerializer(serializers.ModelSerializer):
+    """
+    serializer for list of origin media data
+    """
+    class Meta:
+        model = OriginMedia
+        fields = ['id', 'level_id', 'title']
+
+
+class MediaSearchSerializer(serializers.Serializer):
     """
         serialize search requests
         """
     level_id = serializers.IntegerField(allow_null=True)
 
 
-class EditOriginSerializer(serializers.Serializer):
+class MediaAnalysisSerializer(serializers.ModelSerializer):
     """
-    serialize edit requests
+    serializer for media data analysis
     """
-    level_id = serializers.IntegerField()
-    title = serializers.CharField(max_length=64, allow_null=True)
-    content = serializers.CharField(max_length=1024, allow_null=True)
-    audio_path = serializers.FileField(max_length=256, allow_null=True)
-    video_path = serializers.FileField(max_length=256, allow_null=True)
-
-    def update_data(self):
-        """
-        update data
-        """
-        if self.data['level_id'] is None:
-            return False
-        try:
-            data = OriginMedia.objects.get(level_id=self.data['level_id'])
-        except OriginMedia.DoesNotExist:
-            return False
-        if self.data['title']:
-            data.title = self.data['title']
-        if self.data['content']:
-            data.content = self.data['content']
-        if self.data['audio_path']:
-            data.audio_path = self.data['audio_path']
-        if self.data['video_path']:
-            data.video_path = self.data['video_path']
-        data.save()
-        return True
-
-
-class OriginMediaListSerializer(serializers.ModelSerializer):
-    """
-    serializer for list of origin media data
-    """
-
     class Meta:
         model = OriginMedia
-        fields = ['id', 'level_id', 'title']
+
+
+class UserAnalysisSerializer(serializers.ModelSerializer):
+    """
+    serializer for user data analysis
+    """
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'gender', 'level']
+
+
+class UserAudioAnalysisSerializer(serializers.ModelSerializer):
+    """
+    serializer for user audio data analysis
+    """
+    class Meta:
+        model = UserAudio
+        fields = "__all__"
+
