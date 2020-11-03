@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from personnel.models import UserAudio
+from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
 from .serializers import OriginMediaCreateSerializer, OriginMediaUpdateSerializer,\
     SearchOriginSerializer, EditOriginSerializer, OriginMediaListSerializer
@@ -156,3 +156,14 @@ class MediaDataViewSets(viewsets.ModelViewSet):
     API on api/manager/data/media, data analysis of media data for manager
     """
 
+
+class UserDataViewSets(viewsets.ModelViewSet):
+    """
+    API on api/manager/data/user, data analysis of user data for manager
+    """
+
+
+class UserAudioDataViewSets(viewsets.ModelViewSet):
+    """
+    API on api/manager/data/user_audio, data analysis of user data for manager
+    """
