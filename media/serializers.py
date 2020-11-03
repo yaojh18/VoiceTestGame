@@ -11,6 +11,7 @@ class MediaCreateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
+
     class Meta:
         model = OriginMedia
         fields = "__all__"
@@ -40,6 +41,7 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
+
     class Meta:
         model = OriginMedia
         fields = "__all__"
@@ -71,6 +73,7 @@ class MediaListSerializer(serializers.ModelSerializer):
     """
     serializer for list of origin media data
     """
+
     class Meta:
         model = OriginMedia
         fields = ['id', 'level_id', 'title']
@@ -87,6 +90,7 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
     """
     serializer for media data analysis
     """
+
     class Meta:
         model = OriginMedia
         fields = "__all__"
@@ -96,6 +100,8 @@ class UserAnalysisSerializer(serializers.ModelSerializer):
     """
     serializer for user data analysis
     """
+    passed = serializers.BooleanField
+
     class Meta:
         model = UserProfile
         fields = ['user', 'gender', 'level']
@@ -105,7 +111,7 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
     """
     serializer for user audio data analysis
     """
+
     class Meta:
         model = UserAudio
         fields = "__all__"
-

@@ -194,9 +194,10 @@ class UserDataViewSets(viewsets.ModelViewSet):
         gender = self.request.query_params.get('gender', None)
         if sort == "level":
             queryset = queryset.order_by('level')
-        if gender == "male":
+        # value of gender may be changed
+        if gender == "0":
             queryset = queryset.filter(gender='male')
-        if gender == "female":
+        if gender == "1":
             queryset = queryset.filter(gender='female')
         return queryset
 
@@ -207,3 +208,23 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated, ]
     serializer_class = UserAudioAnalysisSerializer
+    queryset = UserAudio.objects.all()
+
+    def get_queryset(self):
+        """
+        get queryset
+        """
+        queryset = UserAudio.objects.all()
+        level = self.request.query_params.get('level', None)
+        gender = self.request.query_params.get('gender', None)
+        start_time = self.request.query_params.get('start_time', None)
+        end_time = self.request.query_params.get('end_time', None)
+        sort = self.request.query_params.get('sort', None)
+        if sort == "score":
+            queryset = queryset.order_by('score')
+        if sort == "level":
+            pass
+        if sort == "time":
+            queryset = queryset.order_by('time')
+        return queryset
+
