@@ -1,15 +1,19 @@
 """
 Serializers for media app
 """
-# pylint: disable=E5142, W0223, W0221, R0201
+# pylint: disable=E5142, W0223, W0221, R0201\
+from django.db.models import Avg
+from django.contrib.auth.models import User
 from rest_framework import serializers
+from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
 
 
-class OriginMediaCreateSerializer(serializers.ModelSerializer):
+class MediaCreateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
+
     class Meta:
         model = OriginMedia
         exclude = ['speaker_id']
@@ -35,14 +39,14 @@ class OriginMediaCreateSerializer(serializers.ModelSerializer):
         return num
 
 
-class OriginMediaUpdateSerializer(serializers.ModelSerializer):
+class MediaUpdateSerializer(serializers.ModelSerializer):
     """
     serialize OriginMedia data
     """
+
     class Meta:
         model = OriginMedia
-        fields = "__all__"
-        # read_only_fields = ['level_id']
+        exclude = ['speaker_id']
         extra_kwargs = {
             'level_id': {'allow_null': True},
             'title': {'allow_null': True},
@@ -66,46 +70,7 @@ class OriginMediaUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SearchOriginSerializer(serializers.Serializer):
-    """
-        serialize search requests
-        """
-    level_id = serializers.IntegerField(allow_null=True)
-
-
-class EditOriginSerializer(serializers.Serializer):
-    """
-    serialize edit requests
-    """
-    level_id = serializers.IntegerField()
-    title = serializers.CharField(max_length=64, allow_null=True)
-    content = serializers.CharField(max_length=1024, allow_null=True)
-    audio_path = serializers.FileField(max_length=256, allow_null=True)
-    video_path = serializers.FileField(max_length=256, allow_null=True)
-
-    def update_data(self):
-        """
-        update data
-        """
-        if self.data['level_id'] is None:
-            return False
-        try:
-            data = OriginMedia.objects.get(level_id=self.data['level_id'])
-        except OriginMedia.DoesNotExist:
-            return False
-        if self.data['title']:
-            data.title = self.data['title']
-        if self.data['content']:
-            data.content = self.data['content']
-        if self.data['audio_path']:
-            data.audio_path = self.data['audio_path']
-        if self.data['video_path']:
-            data.video_path = self.data['video_path']
-        data.save()
-        return True
-
-
-class OriginMediaListSerializer(serializers.ModelSerializer):
+class MediaListSerializer(serializers.ModelSerializer):
     """
     serializer for list of origin media data
     """
@@ -113,3 +78,78 @@ class OriginMediaListSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginMedia
         fields = ['id', 'level_id', 'title']
+
+
+class MediaSearchSerializer(serializers.Serializer):
+    """
+    serialize search requests
+    """
+    level_id = serializers.IntegerField(allow_null=True)
+
+
+class MediaAnalysisSerializer(serializers.ModelSerializer):
+    """
+    serializer for media data analysis
+    """
+
+    class Meta:
+        model = OriginMedia
+        fields = ['id', 'level_id', 'title']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        origin_media = OriginMedia.objects.get(pk=instance.id)
+        users = origin_media.users.all()
+        passed_users = users.filter(score__gt=60)
+        played_num = users.count()
+        passed_num = passed_users.count()
+        passed_proportion = None
+        if not played_num == 0:
+            passed_proportion = passed_num / played_num
+        male = users.filter(user__userprofile__gender='0')
+        female = users.filter(user__userprofile__gender='1')
+        data['played_num'] = played_num
+        data['passed_num'] = passed_num
+        data['passed_proportion'] = passed_proportion
+        data['male_num'] = male.count()
+        data['female_num'] = female.count()
+        data['passed_male'] = passed_users.filter(user__userprofile__gender='0').count()
+        data['passed_female'] = passed_users.filter(user__userprofile__gender='1').count()
+        data['score_average'] = users.aggregate(score=Avg('score'))['score']
+        data['male_score_average'] = male.aggregate(score=Avg('score'))['score']
+        data['female_score_average'] = female.aggregate(score=Avg('score'))['score']
+        return data
+
+
+class UserAnalysisSerializer(serializers.ModelSerializer):
+    """
+    serializer for user data analysis
+    """
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'gender']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['user'] = User.objects.get(pk=instance.user.id).username
+        return data
+
+
+class UserAudioAnalysisSerializer(serializers.ModelSerializer):
+    """
+    serializer for user audio data analysis
+    """
+
+    class Meta:
+        model = UserAudio
+        fields = ['user', 'media', 'audio', 'timestamp', 'score']
+        extra_kwargs = {
+            'media': {'write_only': True}
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['user'] = User.objects.get(pk=instance.user.id).username
+        level = OriginMedia.objects.get(id=instance.media.id).level_id
+        data['level_id'] = level
+        return data
