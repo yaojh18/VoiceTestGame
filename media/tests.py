@@ -235,3 +235,20 @@ class ClientMediaTest(TestCase):
     def test_list(self):
         response = self.client.get('/api/media/')
         self.assertEqual(response.status_code, 200)
+
+
+class DataAnalysisTest(TestCase):
+    def setUp(self):
+        Group.objects.create(name='manager')
+        Group.objects.create(name='visitor')
+        response = self.client.post('/api/users/registration/', data={
+            'username': 'test',
+            'password': '123456',
+            'password2': '123456'
+        }, content_type='application/json')
+        self.token = json.loads(response.content)["token"]
+        self.client.login(username='test', password='123456')
+
+    def media(self, title=None, page_limit=None):
+        url = '/api/manager/data/origin/?'
+

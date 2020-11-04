@@ -173,7 +173,6 @@ class MediaDataViewSets(viewsets.ModelViewSet):
             page_start = min(page_start, queryset.count())
             page_end = min(page_start+page_limit, queryset.count())
             queryset = queryset.all()[page_start:page_end]
-            print(page_start,page_end)
         return queryset
 
 
@@ -197,6 +196,13 @@ class UserDataViewSets(viewsets.ModelViewSet):
         # value of gender may be changed
         if gender is not None:
             queryset = queryset.filter(gender=gender)
+        page_limit = self.request.query_params.get('page_limit', None)
+        if page_limit is not None:
+            page_limit = int(page_limit)
+            page_start = int(self.request.query_params.get('page_start', 0))
+            page_start = min(page_start, queryset.count())
+            page_end = min(page_start + page_limit, queryset.count())
+            queryset = queryset.all()[page_start:page_end]
         return queryset
 
 
@@ -232,4 +238,11 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
             queryset = queryset.order_by('media__level_id')
         if sort == "time":
             queryset = queryset.order_by('timestamp')
+        page_limit = self.request.query_params.get('page_limit', None)
+        if page_limit is not None:
+            page_limit = int(page_limit)
+            page_start = int(self.request.query_params.get('page_start', 0))
+            page_start = min(page_start, queryset.count())
+            page_end = min(page_start + page_limit, queryset.count())
+            queryset = queryset.all()[page_start:page_end]
         return queryset
