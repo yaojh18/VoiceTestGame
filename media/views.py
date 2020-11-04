@@ -2,6 +2,7 @@
 Views of media app
 """
 # pylint: disable=E5142, R0901, E1101
+import datetime
 from django.db.models import Max, Min
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -212,8 +213,6 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
         queryset = UserAudio.objects.all()
         level = self.request.query_params.get('level', None)
         gender = self.request.query_params.get('gender', None)
-        # min_time = queryset.aggregate(timestamp=Min('timestamp'))['timestamp']
-        # max_time = queryset.aggregate(timestamp=Max('timestamp'))['timestamp']
         start_time = self.request.query_params.get('start_time', None)
         end_time = self.request.query_params.get('end_time', None)
         sort = self.request.query_params.get('sort', None)
@@ -223,8 +222,10 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
         if gender is not None:
             queryset = queryset.filter(user__userprofile__gender=gender)
         if start_time is not None:
+            start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d")
             queryset = queryset.filter(timestamp__gte=start_time)
         if end_time is not None:
+            end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d")
             queryset = queryset.filter(timestamp__lte=end_time)
         if sort == "score":
             queryset = queryset.order_by('score')

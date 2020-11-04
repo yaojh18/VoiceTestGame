@@ -1,7 +1,7 @@
 """
 Serializers for media app
 """
-# pylint: disable=E5142, W0223, W0221, R0201
+# pylint: disable=E5142, W0223, W0221, R0201\
 from rest_framework import serializers
 from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
@@ -120,6 +120,7 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
+        print(instance.timestamp)
         data = super().to_representation(instance)
         level = OriginMedia.objects.get(id=instance.media.id).level_id
         data['level_id'] = level
