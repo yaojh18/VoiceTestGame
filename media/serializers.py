@@ -2,7 +2,8 @@
 Serializers for media app
 """
 # pylint: disable=E5142, W0223, W0221, R0201\
-from django.db.models import Q, Avg
+from django.db.models import Avg
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
@@ -46,7 +47,6 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginMedia
         fields = "__all__"
-        # read_only_fields = ['level_id']
         extra_kwargs = {
             'level_id': {'allow_null': True},
             'title': {'allow_null': True},
@@ -100,7 +100,6 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         origin_media = OriginMedia.objects.get(pk=instance.id)
         users = origin_media.users.all()
-        # print(users.values())
         passed_users = users.filter(score__gt=60)
         played_num = users.count()
         passed_num = passed_users.count()
@@ -109,21 +108,16 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
             passed_proportion = passed_num / played_num
         male = users.filter(user__userprofile__gender='0')
         female = users.filter(user__userprofile__gender='1')
-        passed_male = passed_users.filter(user__userprofile__gender='0')
-        passed_female = passed_users.filter(user__userprofile__gender='1')
-        score_average = users.aggregate(score=Avg('score'))['score']
-        male_score_average = male.aggregate(score=Avg('score'))['score']
-        female_score_average = female.aggregate(score=Avg('score'))['score']
         data['played_num'] = played_num
         data['passed_num'] = passed_num
         data['passed_proportion'] = passed_proportion
         data['male_num'] = male.count()
         data['female_num'] = female.count()
-        data['passed_male'] = passed_male.count()
-        data['passed_female'] = passed_female.count()
-        data['score_average'] = score_average
-        data['male_score_average'] = male_score_average
-        data['female_score_average'] = female_score_average
+        data['passed_male'] = passed_users.filter(user__userprofile__gender='0').count()
+        data['passed_female'] = passed_users.filter(user__userprofile__gender='1').count()
+        data['score_average'] = users.aggregate(score=Avg('score'))['score']
+        data['male_score_average'] = male.aggregate(score=Avg('score'))['score']
+        data['female_score_average'] = female.aggregate(score=Avg('score'))['score']
         return data
 
 
@@ -134,6 +128,11 @@ class UserAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ['user', 'gender', 'level']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['user'] = User.objects.get(pk=instance.user.id).username
+        return data
 
 
 class UserAudioAnalysisSerializer(serializers.ModelSerializer):
@@ -150,6 +149,7 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        data['user'] = User.objects.get(pk=instance.user.id).username
         level = OriginMedia.objects.get(id=instance.media.id).level_id
         data['level_id'] = level
         return data

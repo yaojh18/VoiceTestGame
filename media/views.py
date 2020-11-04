@@ -3,7 +3,7 @@ Views of media app
 """
 # pylint: disable=E5142, R0901, E1101
 import datetime
-from django.db.models import Max, Min
+from django.db.models import Max
 from rest_framework import viewsets, status, pagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -32,9 +32,9 @@ class ManagerViewSets(viewsets.ModelViewSet):
         level = self.request.query_params.get('level_id', None)
         if level is not None:
             queryset = queryset.filter(level_id=level)
-        name = self.request.query_params.get('title', None)
-        if name is not None:
-            queryset = queryset.filter(title__icontains=name)
+        title = self.request.query_params.get('title', None)
+        if title is not None:
+            queryset = queryset.filter(title__icontains=title)
         page_object = PageNumberPagination()
         size = self.request.query_params.get('size', None)
         if size is not None:
@@ -242,11 +242,4 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
         size = self.request.query_params.get('size', None)
         if size is not None:
             queryset = page_object.paginate_queryset(queryset, self.request)
-        # page_limit = self.request.query_params.get('page_limit', None)
-        # if page_limit is not None:
-        #     page_limit = int(page_limit)
-        #     page_start = int(self.request.query_params.get('page_start', 0))
-        #     page_start = min(page_start, queryset.count())
-        #     page_end = min(page_start + page_limit, queryset.count())
-        #     queryset = queryset.all()[page_start:page_end]
         return queryset

@@ -27,7 +27,42 @@
 #### 数据列表
 - url: api/manager
 - method: GET
+- request: 在url后加?param={}进行查找, 参数包括：\
+    level: 关卡号  title: 标题（关键词包含查找）\
+    size: 分页，一页的数据条数，若没有此项则不进行分页  page: 页数，从1开始
 - response: list[dict{id, level_id, title}] (由dict组成的列表)
+#### 数据分析：音视频数据
+- url: api/manager/data/origin
+- method: GET
+- request: 在url后加?param={}, 参数包括：\
+    title: 按标题查找\
+    分页: size和page，与"数据列表"中相同
+- response: dict{\
+    'played_num': 该关卡游戏总次数  
+    'passed_num': 该关卡通过次数  
+    'passed_proportion': 通过率\
+    'male_num': 男性游戏次数  
+    'female_num': 女性游戏次数  
+    'passed_male': 男性通过次数  
+    'passed_female': 女性通过次数\
+    'score_average': 所有玩家录音均分  
+    'male_score_average': 男性均分  
+    'female_score_average': 女性均分 }
+#### 数据分析：用户数据
+- url: api/manager/data/user
+- method: GET
+- request: 在url后加?param={}, 参数包括：\
+    sort: 排序规则，可选'level'  gender: 筛选性别，0为男，1为女\
+    分页: size和page，与"数据列表"中相同
+- response: dict{'user': 用户名, 'gender': 性别，男0女1, 'level': 用户游戏等级}
+#### 数据分析：用户音频数据
+- url: api/manager/data/user_audio
+- method: GET
+- request: 在url后加?param={}, 参数包括：\
+    level: 按关卡筛选  gender: 按性别筛选，男0女1\
+    start_time,end_time: 按时间上下界筛选，值用YYYY-MM-DD表示\
+    sort: 可取值'score','level','time'，分别表示按分数、关卡、时间排序
+- response: dict{'user':用户名,'level_id':关卡号,'timestamp':录制时间,'score':得分,'audio':用户录音音频url}
 
 ### 音视频数据：小程序客户端
 #### 单独返回音频接口
@@ -98,6 +133,7 @@
 
 # 2020.10.5 李侔繁
 ### 音视频数据操作
+! 已弃用
 #### 添加
 - url: api/manager/add
 - request: 数据内容: {title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}

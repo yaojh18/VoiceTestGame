@@ -1,7 +1,7 @@
 """
 Tests of media app
 """
-# pylint: disable=R0913
+# pylint: disable=R0913, E5142
 import os
 import json
 from django.test import TestCase
@@ -80,10 +80,11 @@ class ManagerTest(TestCase):
             'level_id': level_id,
             'title': title,
             'content': content,
-            'audio_path': None,
-            'video_path': None
+            'audio_path': audio_path,
+            'video_path': video_path
         }
-        return self.client.put('/api/manager/' + str(data_id) + '/', data=data, content_type='application/json')
+        return self.client.put('/api/manager/' + str(data_id) + '/',
+                               data=data, content_type='application/json')
 
     def test_create(self):
         """
@@ -149,31 +150,36 @@ class ClientMediaTest(TestCase):
         self.client.login(username='test', password='123456')
 
     def video(self, level_id):
+        """post for video"""
         data = {
             'level_id': level_id
         }
         return self.client.post('/api/media/video/', data=data, content_type='application/json')
 
     def audio(self, level_id):
+        """post for audio"""
         data = {
             'level_id': level_id
         }
         return self.client.post('/api/media/audio/', data=data, content_type='application/json')
 
     def material(self, level_id):
+        """post for material"""
         data = {
             'level_id': level_id
         }
         return self.client.post('/api/media/material/', data=data, content_type='application/json')
 
     def test_media(self):
+        """
+        tests for media APIs
+        """
         OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
                                    audio_path='/data/origin/audio/test3.wav',
                                    video_path='/data/origin/video/test3.mp4')
         OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
-        # print(OriginMedia.objects.all().values())
         response = self.video(level_id=1)
         self.assertEqual(response.status_code, 200)
         response = self.video(level_id=3)
@@ -196,11 +202,17 @@ class ClientMediaTest(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_list(self):
+        """
+        tests for list
+        """
         response = self.client.get('/api/media/')
         self.assertEqual(response.status_code, 200)
 
 
 class DataAnalysisTest(TestCase):
+    """
+    tests for data analysis APIs
+    """
     def setUp(self):
         Group.objects.create(name='manager')
         Group.objects.create(name='visitor')
@@ -213,6 +225,9 @@ class DataAnalysisTest(TestCase):
         self.client.login(username='test', password='123456')
 
     def media(self, title=None, page=None, size=None):
+        """
+        get media data
+        """
         url = '/api/manager/data/origin/?'
         if title is not None:
             url += 'title=' + title + '&'
@@ -223,6 +238,9 @@ class DataAnalysisTest(TestCase):
         return self.client.get(url, content_type='application/json')
 
     def user(self, sort=None, gender=None, page=None, size=None):
+        """
+        get user data
+        """
         url = '/api/manager/data/user/?'
         if sort is not None:
             url += 'sort=' + sort + '&'
@@ -235,6 +253,9 @@ class DataAnalysisTest(TestCase):
         return self.client.get(url, content_type='application/json')
 
     def user_audio(self, level=None, gender=None, start_time=None, end_time=None, sort=None):
+        """
+        get user audio data
+        """
         url = '/api/manager/data/user_audio/?'
         if level is not None:
             url += 'level=' + str(level) + '&'
@@ -249,6 +270,9 @@ class DataAnalysisTest(TestCase):
         return self.client.get(url, content_type='application/json')
 
     def test_media(self):
+        """
+        tests for media data APIs
+        """
         OriginMedia.objects.create(title='test1', content='test 1', level_id=0,
                                    audio_path='/data/origin/audio/test1.wav',
                                    video_path='/data/origin/video/test1.mp4')
@@ -259,6 +283,9 @@ class DataAnalysisTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_user(self):
+        """
+        tests for user data APIs
+        """
         user = User(username='user1', password='123456')
         user.save()
         profile = UserProfile(user=user, openid='1', gender='0', level=0)
@@ -271,6 +298,9 @@ class DataAnalysisTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_user_audio(self):
+        """
+        tests for user audio APIs
+        """
         user = User(username='user1', password='123456')
         user.save()
         media = OriginMedia(title='test1', content='test 1', level_id=0,
