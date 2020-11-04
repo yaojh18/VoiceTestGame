@@ -141,7 +141,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         scores = []
         for item in response.data:
             titles.append(item['title'])
-            user_audio = UserAudio.objects.filter(user=user_id, level=item['id'])
+            user_audio = UserAudio.objects.filter(user=user_id, media=item['id'])
             score = user_audio.aggregate(score=Max('score'))['score']
             if score is None:
                 score = 0
