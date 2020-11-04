@@ -30,7 +30,7 @@ def get_speaker_id(audio_id, audio_path):
         "secret": APP_SECRET
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise Exception(response['errcode'])
+        raise serializers.ValidationError(response['errmsg'])
     speaker_id = response['speakerId']
     response = requests.post(APP_URL + '/interface/text/training/get', json={
         'speaker_id': speaker_id,
@@ -39,7 +39,7 @@ def get_speaker_id(audio_id, audio_path):
         'secret': APP_SECRET
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise Exception(response['errcode'])
+        raise serializers.ValidationError(response['errmsg'])
     session_id = response['session_id']
     response = requests.post(APP_URL + '/interface/voice/training/upload', files={
         'audio': ('audio', audio_path.open('rb'), 'audio/x-wav'),
@@ -51,12 +51,12 @@ def get_speaker_id(audio_id, audio_path):
         }))
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise Exception(response['errcode'])
+        raise serializers.ValidationError(response['errmsg'])
     response = requests.post(APP_URL + '/interface/voiceprint/training/create', json={
             'session_id': session_id
         }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise Exception(response['errcode'])
+        raise serializers.ValidationError(response['errmsg'])
     return speaker_id
 
 
@@ -72,7 +72,7 @@ def get_audio_score(speaker_id, audio):
         'secret': APP_SECRET
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise Exception(response['errcode'])
+        raise serializers.ValidationError(response['errmsg'])
     session_id = response['session_id']
     response = requests.post(APP_URL + '/interface/verification/score', files={
         'audio': ('audio', audio.open('rb'), 'audio/x-wav'),
@@ -83,7 +83,7 @@ def get_audio_score(speaker_id, audio):
         }))
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise Exception(response['errcode'])
+        raise serializers.ValidationError(response['errmsg'])
     return response['passed'], response['score']
 
 
@@ -137,7 +137,7 @@ class UserLoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = authenticate(username=attrs['username'], password=attrs['password'])
         if not user:
-            raise serializers.ValidationError
+            raise serializers.ValidationError('Please input the correct username and password.')
         self.instance = User.objects.get(username=attrs['username'])
         self.instance.last_login = datetime.datetime.now()
         self.instance.save()
@@ -203,7 +203,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Please input the correct username.')
         password_old = attrs.pop('password_old')
         if not user.check_password(password_old):
-            print('Wrong')
             raise serializers.ValidationError('Please input the correct password.')
         attrs['password'] = make_password(attrs['password'])
         self.instance = user
@@ -253,15 +252,21 @@ class UserAudioSerializer(serializers.ModelSerializer):
             'score': {'read_only': True}
         }
 
+    def validate(self, attrs):
+        media = OriginMedia.objects.filter(level_id=attrs['level_id']).first()
+        if media is None:
+            raise serializers.ValidationError('Level id does not exist.')
+        if media.speaker_id is None:
+            media.speaker_id = get_speaker_id(media.id, media.audio_path)
+        attrs['passed'], attrs['score'] = get_audio_score(media.speaker_id, attrs['audio'])
+        return attrs
 
     def create(self, validated_data):
         user = self.context['user']
-        media = OriginMedia.objects.get(level_id=validated_data['level_id'])
-        if media.speaker_id is None:
-            media.speaker_id = get_speaker_id(media.id, media.audio_path)
-        user_audio = UserAudio(user=user, media=media)
+        media = OriginMedia.objects.get(level_id=validated_data.pop('level_id'))
+        user_audio = UserAudio(user=user, media=media, score=validated_data['score'])
+        user_audio.passed = validated_data['passed']
         user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name)
-        user_audio.passed, user_audio.score = get_audio_score(media.speaker_id, user_audio.audio)
         user_audio.save()
         return user_audio
 

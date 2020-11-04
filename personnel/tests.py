@@ -1,8 +1,9 @@
 """
 Unity test for personnel.
 """
-# pylint: disable=E5142
+# pylint: disable=E5142, W0603, R0201
 import json
+import os
 from django.test import TestCase
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
@@ -10,8 +11,9 @@ from django.core.files.base import File
 from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer
 from media.models import OriginMedia
 from .serializers import WechatLoginSerializer
-from .models import UserProfile
+from .models import UserProfile, UserAudio
 
+DELETE_FILES = []
 
 class LogTest(TestCase):
     """
@@ -77,9 +79,8 @@ class LogTest(TestCase):
         Try to create test account.
         """
         response = self.registration('test', '123456', '123456')
-        print(response.content)
         self.assertEqual(response.status_code, 201)
-        response = self.registration('test', '123456', '1234567')
+        response = self.registration('test1', '123456', '1234567')
         self.assertNotEqual(response.status_code, 201)
         response = self.registration('test1', '123456', '123456', 'yao123')
         self.assertEqual(response.status_code, 201)
@@ -105,8 +106,25 @@ class LogTest(TestCase):
         """
         Test if viewset works properly.
         """
+        self.login(username='admin',password='123456')
+        self.client.login(username='admin', password='123456')
         self.client.get('/api/users/')
         self.client.get('/api/wechat/')
+
+    def test_update(self):
+        """
+        Test to update user data.
+        """
+        self.registration('test3','123456','123456')
+        data = {
+            'username': 'test3',
+            'password': '1234567',
+            'password_old': '123456',
+            'name': 'yaojh',
+            'email': 'yaojh18@mails.tsinghua.edu.cn'
+        }
+        response = self.client.put('/api/users/', data=data, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
 
     def test_wechat_serializer(self):
         """
@@ -118,6 +136,9 @@ class LogTest(TestCase):
         res = WechatLoginSerializer(data=data)
         if res.is_valid():
             self.assertEqual(res.validated_data['openid'], '123456')
+            res.save()
+        res = WechatLoginSerializer(data=data)
+        if res.is_valid():
             res.save()
 
     def test_token(self):
@@ -150,15 +171,13 @@ class WechatTest(TestCase):
         audio.close()
         self.client.login(username='admin', password='123456')
 
-    def insert_user_audio(self):
+    def insert_user_audio(self, level_id=0):
         """
         Insert an user audio.
         """
-        media = OriginMedia.objects.first()
-        print(media.audio_path)
         audio = open('data/test/大碗宽面.wav', 'rb+')
         data = {
-            'level_id': 0,
+            'level_id': level_id,
             'audio': audio
         }
         response = self.client.post('/api/wechat/audio/', data=data)
@@ -174,8 +193,10 @@ class WechatTest(TestCase):
             'nick_name': 'yao123',
             'city': 'beijing',
             'province': 'beijing',
-            'avatar_url': 'https://baidu.com/'
         }
+        response = self.client.post('/api/wechat/profile/', data=data)
+        self.assertNotEqual(response.status_code, 200)
+        data['avatar_url'] = 'https://baidu.com/'
         response = self.client.post('/api/wechat/profile/', data=data)
         self.assertEqual(response.status_code, 200)
 
@@ -183,6 +204,8 @@ class WechatTest(TestCase):
         """
         Test API for /api/wechat/audio/.
         """
+        response = self.insert_user_audio(level_id=1)
+        self.assertNotEqual(response.status_code, 200)
         response = self.insert_user_audio()
         self.assertEqual(response.status_code, 200)
 
@@ -207,3 +230,26 @@ class WechatTest(TestCase):
         }
         response = self.client.get('/api/level/audio/', data=data)
         self.assertEqual(response.status_code, 200)
+        data['level_id'] = 1
+        response = self.client.get('/api/level/audio/', data=data)
+        self.assertNotEqual(response.status_code, 200)
+
+    def tearDown(self) -> None:
+        audios = UserAudio.objects.all()
+        global DELETE_FILES
+        for audio in audios:
+            DELETE_FILES.append(audio.audio.path)
+        super().tearDown()
+
+
+class TrashTest(TestCase):
+    """
+    Delete the files of test user audios.
+    """
+    def test_trash(self):
+        """
+        Delete the files of test user audios.
+        """
+        global DELETE_FILES
+        for file in DELETE_FILES:
+            os.remove(file)

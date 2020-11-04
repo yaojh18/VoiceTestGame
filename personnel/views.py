@@ -16,7 +16,7 @@ from .serializers import UserInfoSerializer, UserLoginSerializer, \
     UserRegistrationSerializer, UserProfileSerializer, WechatLoginSerializer, \
     UserAudioSerializer, UserUpdateSerializer
 # Create your views here.
-
+AUDIO_PERMISSION = 'auth.audio'
 
 
 def get_wechat_credential(code):
@@ -148,7 +148,7 @@ class WechatViewSet(viewsets.GenericViewSet,
         API for /api/wechat/audio.
         """
         user = request.user
-        if user.has_perm('auth.audio'):
+        if user.has_perm(AUDIO_PERMISSION):
             res = self.get_serializer_class()(data=request.data, context={'user': user})
             if res.is_valid():
                 res.save()
@@ -171,7 +171,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         """
         user = self.request.user
         params = self.request.query_params
-        if user.has_perm('auth.audio') and 'level_id' in params:
+        if user.has_perm(AUDIO_PERMISSION) and 'level_id' in params:
             length = params.get('length', default=5)
             media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
             if media_id is not None:
@@ -187,7 +187,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         """
         user = self.request.user
         params = self.request.query_params
-        if user.has_perm('auth.audio') and 'level_id' in params:
+        if user.has_perm(AUDIO_PERMISSION) and 'level_id' in params:
             media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
             if media_id is not None:
                 user_id = params.get('user_id', default=user.id)
