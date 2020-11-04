@@ -102,7 +102,9 @@ class ReadGroupInfo(serializers.RelatedField):
     """
     def to_representation(self, obj):
         group = obj.first()
-        return {"id": group.pk, "name": group.name}
+        if hasattr(obj, 'pk'):
+            return {"id": group.pk, "name": group.name}
+        return {"id": None, "name": None}
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -280,7 +282,13 @@ class WechatLoginSerializer(serializers.Serializer):
         default=serializers.CharField(max_length=128, read_only=True))
     password = serializers.HiddenField(
         default=serializers.CharField(max_length=128, read_only=True))
-    token = serializers.CharField(max_length=512, read_only=True)
+    token = serializers.SerializerMethodField()
+
+    def get_token(self, obj):
+        """
+        Automatically generate token.
+        """
+        return get_user_token(obj)
 
     def validate(self, attrs):
         res = dict()
@@ -298,9 +306,7 @@ class WechatLoginSerializer(serializers.Serializer):
         userprofile.save()
         visitor = Group.objects.get(name='visitor')
         user.groups.add(visitor)
-        user.token = get_user_token(user)
         return user
 
     def update(self, instance, validated_data):
-        instance.token = get_user_token(instance)
         return instance
