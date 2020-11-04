@@ -5,7 +5,8 @@ Tests of media app
 import os
 import json
 from django.test import TestCase
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
+from personnel.models import UserProfile, UserAudio
 from .models import OriginMedia
 
 
@@ -249,6 +250,50 @@ class DataAnalysisTest(TestCase):
         self.token = json.loads(response.content)["token"]
         self.client.login(username='test', password='123456')
 
-    def media(self, title=None, page_limit=None):
+    def media(self, title=None, page_limit=None, page_start=None):
         url = '/api/manager/data/origin/?'
+        if title is not None:
+            url += 'title=' + title + '&'
+        if page_limit is not None:
+            url += 'page_limit=' + str(page_limit) + '&'
+        if page_start is not None:
+            url += 'page_start=' + str(page_start) + '&'
+        return self.client.get(url, content_type='application/json')
 
+    def user(self, sort=None, gender=None, page_limit=None, page_start=None):
+        url = '/api/manager/data/user/?'
+        if sort is not None:
+            url += 'sort=' + sort + '&'
+        if gender is not None:
+            url += 'gender=' + str(gender) + '&'
+        if page_limit is not None:
+            url += 'page_limit=' + str(page_limit) + '&'
+        if page_start is not None:
+            url += 'page_start=' + str(page_start) + '&'
+        print(url)
+        return self.client.get(url, content_type='application/json')
+
+    # def user_audio(self, ):
+
+    def test_media(self):
+        OriginMedia.objects.create(title='test1', content='test 1', level_id=0,
+                                   audio_path='/data/origin/audio/test1.wav',
+                                   video_path='/data/origin/video/test1.mp4')
+        OriginMedia.objects.create(title='test2', content='test 2', level_id=1,
+                                   audio_path='/data/origin/audio/test2.wav',
+                                   video_path='/data/origin/video/test2.mp4')
+        response = self.media(title='test', page_limit=2, page_start=0)
+        self.assertEqual(response.status_code, 200)
+
+    def test_user(self):
+        user = User(username='user1', password='123456')
+        user.save()
+        profile = UserProfile(user=user, openid='1', gender='0', level=0)
+        profile.save()
+        user = User(username='user2', password='123456')
+        user.save()
+        profile = UserProfile(user=user, openid='2', gender='1', level=3)
+        profile.save()
+        profile.save()
+        response = self.user(sort='level', gender=0, page_limit=2, page_start=0)
+        self.assertEqual(response.status_code, 200)
