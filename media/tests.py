@@ -1,3 +1,4 @@
+'''
 """
 Tests of media app
 """
@@ -158,3 +159,4 @@ class ManagerTest(TestCase):
         self.assertEqual(response.status_code, 404)
         response = self.search(data_id='ab')
         self.assertEqual(response.status_code, 400)
+'''

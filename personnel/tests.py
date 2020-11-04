@@ -57,11 +57,11 @@ class LogTest(TestCase):
         data = {
             'username': username,
             'password': password,
-            'password2': password2
+            'password_confirm': password2
         }
         if name:
             data['name'] = name
-        return self.client.post('/api/users/registration/', data=data)
+        return self.client.post('/api/users/', data=data)
 
     def login_for_wechat(self, session_id=None):
         """
@@ -77,11 +77,12 @@ class LogTest(TestCase):
         Try to create test account.
         """
         response = self.registration('test', '123456', '123456')
-        self.assertEqual(response.status_code, 200)
+        print(response.content)
+        self.assertEqual(response.status_code, 201)
         response = self.registration('test', '123456', '1234567')
-        self.assertNotEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 201)
         response = self.registration('test1', '123456', '123456', 'yao123')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_login(self):
         """
@@ -140,9 +141,9 @@ class WechatTest(TestCase):
         media = OriginMedia(title="大碗宽面", level_id=0)
         audio = open('data/test/大碗宽面.wav', 'rb+')
         video = open('data/test/大碗宽面.mp4', 'rb+')
-        media.video_path.name = '大碗宽面.mp4'
+        media.video_path.name = 'test/大碗宽面.mp4'
         media.video_path.content = File(video)
-        media.audio_path.name = '大碗宽面.wav'
+        media.audio_path.name = 'test/大碗宽面.wav'
         media.audio_path.content = File(audio)
         media.save()
         video.close()
@@ -153,6 +154,8 @@ class WechatTest(TestCase):
         """
         Insert an user audio.
         """
+        media = OriginMedia.objects.first()
+        print(media.audio_path)
         audio = open('data/test/大碗宽面.wav', 'rb+')
         data = {
             'level_id': 0,
@@ -175,7 +178,6 @@ class WechatTest(TestCase):
         }
         response = self.client.post('/api/wechat/profile/', data=data)
         self.assertEqual(response.status_code, 200)
-
 
     def test_audio(self):
         """
