@@ -2,12 +2,98 @@
 Serializers for personnel.
 """
 # pylint: disable=E5142, W0223, W0221, R0201
-from rest_framework import serializers
+import datetime
+import requests
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
+from rest_framework import serializers
+from rest_framework_jwt.settings import api_settings
 from media.models import OriginMedia
+from config.local_settings import APP_URL, APP_ID, APP_SECRET
 from .models import UserProfile, UserAudio
+
+
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+jwt_response_payload_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
+
+
+def get_speaker_id(audio_id, audio_path):
+    """
+    Create speaker id from audio backend.
+    """
+    response = requests.post(APP_URL + '/interface/auxiliary/getSpeakerId', json={
+        "id_type": "0",
+        "id_number": 'Dijkstra_' + str(audio_id),
+        "app_id": APP_ID,
+        "secret": APP_SECRET
+    }).json()
+    if 'errcode' in response and response['errcode'] != 0:
+        raise Exception(response['errcode'])
+    speaker_id = response['speakerId']
+    response = requests.post(APP_URL + '/interface/text/training/get', json={
+        'speaker_id': speaker_id,
+        'text_type': "4113",
+        'app_id': APP_ID,
+        'secret': APP_SECRET
+    }).json()
+    if 'errcode' in response and response['errcode'] != 0:
+        raise Exception(response['errcode'])
+    session_id = response['session_id']
+    response = requests.post(APP_URL + '/interface/voice/training/upload', files={
+        'audio': ('audio', audio_path.open('rb'), 'audio/x-wav'),
+        'json': (None, str({
+            'session_id': session_id,
+            'voice_index': '1',
+            'bm_bits': 2,
+            'bm_dt': 2
+        }))
+    }).json()
+    if 'errcode' in response and response['errcode'] != 0:
+        raise Exception(response['errcode'])
+    response = requests.post(APP_URL + '/interface/voiceprint/training/create', json={
+            'session_id': session_id
+        }).json()
+    if 'errcode' in response and response['errcode'] != 0:
+        raise Exception(response['errcode'])
+    return speaker_id
+
+
+def get_audio_score(speaker_id, audio):
+    """
+    Get user audio score.
+    """
+    response = requests.post(APP_URL + '/interface/text/verification/get', json={
+        'text_type': '8193',
+        'speaker_id': speaker_id,
+        'bm_bits': 2,
+        'app_id': APP_ID,
+        'secret': APP_SECRET
+    }).json()
+    if 'errcode' in response and response['errcode'] != 0:
+        raise Exception(response['errcode'])
+    session_id = response['session_id']
+    response = requests.post(APP_URL + '/interface/verification/score', files={
+        'audio': ('audio', audio.open('rb'), 'audio/x-wav'),
+        'json': (None, str({
+            'session_id': session_id,
+            'bm_bits': 2,
+            'bm_dt': 2
+        }))
+    }).json()
+    if 'errcode' in response and response['errcode'] != 0:
+        raise Exception(response['errcode'])
+    return response['passed'], response['score']
+
+
+def get_user_token(user):
+    """
+    JWT default way to get user token.
+    """
+    payload = jwt_payload_handler(user)
+    token = jwt_encode_handler(payload)
+    return jwt_response_payload_handler(token, user)['token']
 
 
 class ReadGroupInfo(serializers.RelatedField):
@@ -15,43 +101,46 @@ class ReadGroupInfo(serializers.RelatedField):
     How to display Group informations.
     """
     def to_representation(self, obj):
-        myout = list()
-        for group in obj.all():
-            myout.append({"id": group.pk, "name": group.name})
-        return myout
+        group = obj.first()
+        return {"id": group.pk, "name": group.name}
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
     """
     Display user information for admin.
     """
-    name = serializers.SerializerMethodField(read_only=True)
     groups = ReadGroupInfo(read_only=True)
-
-    def get_name(self, obj):
-        """
-        Display user:name format.
-        """
-        return obj.first_name + obj.last_name
 
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'name', 'email', 'is_superuser',
                     'date_joined', 'last_login', 'groups']
+        extra_kwargs = {
+            'name': {'source': 'first_name'},
+        }
 
 
 class UserLoginSerializer(serializers.Serializer):
     """
     Determine the format of user data when logging in.
     """
-    username = serializers.CharField(max_length=150, required=True)
-    password = serializers.CharField(max_length=128, required=True)
+    username = serializers.CharField(max_length=150, required=True, write_only=True)
+    password = serializers.CharField(max_length=128, required=True, write_only=True)
+    token = serializers.SerializerMethodField()
+
+    def get_token(self, obj):
+        """
+        Automatically generate token.
+        """
+        return get_user_token(obj)
 
     def validate(self, attrs):
         user = authenticate(username=attrs['username'], password=attrs['password'])
         if not user:
             raise serializers.ValidationError
         self.instance = User.objects.get(username=attrs['username'])
+        self.instance.last_login = datetime.datetime.now()
+        self.instance.save()
         return attrs
 
 
@@ -59,29 +148,66 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     """
     Determine the format of user data when registering.
     """
-    name = serializers.CharField(max_length=128, required=False)
-    password2 = serializers.CharField(max_length=128, required=True)
+    name = serializers.CharField(source='first_name', write_only=True, required=False)
+    password_confirm = serializers.CharField(max_length=128, required=True, write_only=True)
+    token = serializers.SerializerMethodField()
+
+    def get_token(self, obj):
+        """
+        Automatically generate token.
+        """
+        return get_user_token(obj)
 
     class Meta:
         model = User
-        fields = ['username', 'password', 'email', 'name', 'password2']
+        fields = ['username', 'password', 'email', 'name', 'password_confirm', 'token']
+        extra_kwargs = {
+            'email': {'write_only': True},
+            'password': {'write_only': True},
+            'username': {'write_only': True, 'required': False}
+        }
 
     def validate(self, attrs):
         password = attrs['password']
-        password2 = attrs.pop('password2')
-        if password != password2:
-            raise serializers.ValidationError
+        password_confirm = attrs.pop('password_confirm')
+        if password != password_confirm:
+            raise serializers.ValidationError('The passwords are not consistent.')
         return attrs
 
     def create(self, validated_data):
-        if 'name' in validated_data:
-            name = validated_data.pop('name')
-            user = User.objects.create_user(**validated_data, first_name=name)
-        else:
-            user = User.objects.create_user(**validated_data)
-        visitor = Group.objects.get(name='visitor')
-        user.groups.add(visitor)
+        user = User.objects.create_user(**validated_data)
+        manager = Group.objects.get(name='manager')
+        user.groups.add(manager)
         return user
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """
+    Determine the format of user data when registering.
+    """
+    name = serializers.CharField(source='first_name', write_only=True, required=False)
+    password_old = serializers.CharField(max_length=128, required=True, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'email', 'name', 'password_old']
+        extra_kwargs = {
+            'email': {'write_only': True},
+            'password': {'write_only': True},
+            'username': {'write_only': True, 'required': False, 'validators': []}
+        }
+
+    def validate(self, attrs):
+        user = User.objects.filter(username=attrs['username']).first()
+        if user is None:
+            raise serializers.ValidationError('Please input the correct username.')
+        password_old = attrs.pop('password_old')
+        if not user.check_password(password_old):
+            print('Wrong')
+            raise serializers.ValidationError('Please input the correct password.')
+        attrs['password'] = make_password(attrs['password'])
+        self.instance = user
+        return attrs
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -93,7 +219,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     city = serializers.CharField(source='userprofile.city', write_only=True)
     province = serializers.CharField(source='userprofile.province', write_only=True)
     avatar_url = serializers.CharField(source='userprofile.avatar_url')
-    user_id = serializers.IntegerField(source='id',read_only=True)
+    user_id = serializers.IntegerField(source='id', read_only=True)
     score = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -116,17 +242,26 @@ class UserAudioSerializer(serializers.ModelSerializer):
     """
     Determine the format of user audio data when writing.
     """
-    level_id = serializers.IntegerField()
+    level_id = serializers.IntegerField(write_only=True)
+    passed = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = UserAudio
-        fields = ['audio', 'level_id']
+        fields = ['level_id', 'passed', 'audio', 'score']
+        extra_kwargs = {
+            'audio': {'write_only': True},
+            'score': {'read_only': True}
+        }
+
 
     def create(self, validated_data):
         user = self.context['user']
         media = OriginMedia.objects.get(level_id=validated_data['level_id'])
+        if media.speaker_id is None:
+            media.speaker_id = get_speaker_id(media.id, media.audio_path)
         user_audio = UserAudio(user=user, media=media)
-        user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name())
+        user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name)
+        user_audio.passed, user_audio.score = get_audio_score(media.speaker_id, user_audio.audio)
         user_audio.save()
         return user_audio
 
@@ -135,9 +270,12 @@ class WechatLoginSerializer(serializers.Serializer):
     """
     Login designed for wechat
     """
-    openid = serializers.CharField(required=True, source='userprofile.openid')
-    username = serializers.CharField(max_length=128, required=False, read_only=True)
-    password = serializers.CharField(max_length=128, required=False, read_only=True)
+    openid = serializers.CharField(source='userprofile.openid',write_only=True)
+    username = serializers.HiddenField(
+        default=serializers.CharField(max_length=128, read_only=True))
+    password = serializers.HiddenField(
+        default=serializers.CharField(max_length=128, read_only=True))
+    token = serializers.CharField(max_length=512, read_only=True)
 
     def validate(self, attrs):
         res = dict()
@@ -155,7 +293,9 @@ class WechatLoginSerializer(serializers.Serializer):
         userprofile.save()
         visitor = Group.objects.get(name='visitor')
         user.groups.add(visitor)
+        user.token = get_user_token(user)
         return user
 
     def update(self, instance, validated_data):
+        instance.token = get_user_token(instance)
         return instance

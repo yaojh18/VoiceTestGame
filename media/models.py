@@ -13,6 +13,7 @@ class OriginMedia(models.Model):
     model of original media
     """
     level_id = models.IntegerField(unique=True, db_index=True)
+    speaker_id = models.CharField(max_length=64, null=True)
     title = models.CharField(max_length=128)
     content = models.CharField(max_length=1024)  # 文案, 格式可能修改
     audio_path = models.FileField(max_length=256, upload_to='origin/audio/')

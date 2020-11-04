@@ -7,20 +7,16 @@ from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_jwt.settings import api_settings
 from django.contrib.auth.models import User
 from django.db.models import Max
-from config.local_settings import WEAPP_ID, WEAPP_SECRETE, APP_URL, APP_ID, APP_SECRET
+from config.local_settings import WEAPP_ID, WEAPP_SECRETE
 from media.models import OriginMedia
 from .models import UserAudio
 from .serializers import UserInfoSerializer, UserLoginSerializer, \
     UserRegistrationSerializer, UserProfileSerializer, WechatLoginSerializer, \
-    UserAudioSerializer
+    UserAudioSerializer, UserUpdateSerializer
 # Create your views here.
 
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-jwt_response_payload_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
 
 
 def get_wechat_credential(code):
@@ -38,45 +34,19 @@ def get_wechat_credential(code):
     return login_response
 
 
-def get_audio_credential():
-    """
-    Get score from audio backend.
-    """
-    response = requests.post(APP_URL + '/interface/auxiliary/getSpeakerId', json={
-        "id_type": "1",
-        "id_number": "130982200005248419",
-        "app_id": APP_ID,
-        "secret": APP_SECRET
-    })
-    speaker_id = response.json()['speakerId']
-    response = requests.post(APP_URL + '/interface/text/training/get', json={
-        'speaker_id': speaker_id,
-        'text_type': "4113",
-        'app_id': APP_ID,
-        'secret': APP_SECRET
-    })
-    session_id = response.json()['session_id']
-    print(session_id)
-
-
-def get_user_token(user):
-    """
-    JWT default way to get user token.
-    """
-    payload = jwt_payload_handler(user)
-    token = jwt_encode_handler(payload)
-    return jwt_response_payload_handler(token, user)
-
-
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.GenericViewSet,
+                  mixins.ListModelMixin,
+                  mixins.CreateModelMixin):
     """
     Define API under api/user/ .
     """
     def get_serializer_class(self):
         if self.action == 'login':
             return UserLoginSerializer
-        if self.action == 'registration':
-            return  UserRegistrationSerializer
+        if self.request.method == 'POST':
+            return UserRegistrationSerializer
+        if self.request.method == 'PUT':
+            return UserUpdateSerializer
         return UserInfoSerializer
 
     def get_queryset(self):
@@ -85,7 +55,9 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         if self.request.user.is_superuser:
             return User.objects.all()
-        return User.objects.none()
+        if self.request.user.is_anonymous:
+            return User.objects.none()
+        return User.objects.filter(id=self.request.user.id)
 
     @action(detail=False, methods=['POST'])
     def login(self, request):
@@ -95,23 +67,29 @@ class UserViewSet(viewsets.ModelViewSet):
 
         res = self.get_serializer_class()(data=request.data)
         if res.is_valid():
-            token = get_user_token(res.instance)
-            return Response(token, status=status.HTTP_200_OK)
+            return Response(res.data, status=status.HTTP_200_OK)
         return Response({'msg': res.errors}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=['POST'])
-    def registration(self, request):
+    def put(self, request):
         """
         API for api/user/registration
         """
         res = self.get_serializer_class()(data=request.data)
+        print(res)
         if res.is_valid():
-            user = res.save()
-            return Response(get_user_token(user), status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_401_UNAUTHORIZED)
+            res.save()
+            return Response(status=status.HTTP_200_OK)
+        return Response({'msg': res.errors}, status=status.HTTP_404_NOT_FOUND)
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        if len(response.data) == 1:
+            response.data = response.data[0]
+        return response
 
 
-class WechatViewSet(viewsets.ModelViewSet):
+class WechatViewSet(viewsets.GenericViewSet,
+                    mixins.ListModelMixin):
     """
     Define API for /api/wechat/.
     """
@@ -124,6 +102,7 @@ class WechatViewSet(viewsets.ModelViewSet):
         if self.action == 'audio':
             return UserAudioSerializer
         return WechatLoginSerializer
+
     def get_queryset(self):
         """
         Get queryset automatically.
@@ -132,19 +111,20 @@ class WechatViewSet(viewsets.ModelViewSet):
             return User.objects.all()
         return User.objects.none()
 
-
-    @action(detail=False, methods=['POST'])
+    @action(detail=False, methods=['POST'], authentication_classes = [])
     def login(self, request):
         """
         API for /api/wechat/login.
         """
-        login_response = get_wechat_credential(request.data['code'])
+        if 'code' in request.data:
+            login_response = get_wechat_credential(request.data['code'])
+        else:
+            return Response({'msg': 'Please provide session_id'}, status=status.HTTP_404_NOT_FOUND)
         if 'errcode' in login_response:
             return Response({'msg': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
         res = self.get_serializer_class()(data=login_response)
         if res.is_valid():
-            user = res.save()
-            return Response(get_user_token(user), status=status.HTTP_200_OK)
+            return Response(res.data, status=status.HTTP_200_OK)
         return Response({'msg':res.errors}, status=status.HTTP_401_UNAUTHORIZED)
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, ] )
@@ -173,8 +153,8 @@ class WechatViewSet(viewsets.ModelViewSet):
         if user.has_perm('auth.audio'):
             res = self.get_serializer_class()(data=request.data, context={'user': user})
             if res.is_valid():
-                user_audio = res.save()
-                return Response({'score': user_audio.score}, status=status.HTTP_200_OK)
+                res.save()
+                return Response(res.data, status=status.HTTP_200_OK)
             return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
         return Response({'msg': 'Manager has no audio'}, status=status.HTTP_403_FORBIDDEN)
 

@@ -12,7 +12,7 @@ class OriginMediaCreateSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = OriginMedia
-        fields = "__all__"
+        exclude = ['speaker_id']
         extra_kwargs = {
             'level_id': {'allow_null': True},
         }

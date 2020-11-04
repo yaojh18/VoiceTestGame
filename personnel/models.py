@@ -25,6 +25,7 @@ class UserAudio(models.Model):
     """
     User audio information, identified by timestamp.
     """
+    @property
     def get_audio_name(self):
         """
         Automatically generate audio name.
@@ -35,4 +36,4 @@ class UserAudio(models.Model):
     media = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users')
     audio = models.FileField(max_length=512, upload_to='users/audio')
     timestamp = models.DateTimeField(auto_now_add=True)
-    score = models.IntegerField(default=0)
+    score = models.FloatField(default=0.0)
