@@ -2,6 +2,7 @@
 Serializers for media app
 """
 # pylint: disable=E5142, W0223, W0221, R0201\
+from django.db.models import Q, Avg
 from rest_framework import serializers
 from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
@@ -93,15 +94,43 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        fields = "__all__"
+        fields = ['id', 'level_id', 'title']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        origin_media = OriginMedia.objects.get(pk=instance.id)
+        users = origin_media.users.all()
+        # print(users.values())
+        passed_users = users.filter(score__gt=0)
+        played_num = users.count()
+        passed_num = passed_users.count()
+        passed_proportion = None
+        if not played_num == 0:
+            passed_proportion = passed_num / played_num
+        male = users.filter(user__userprofile__gender='0')
+        female = users.filter(user__userprofile__gender='1')
+        passed_male = passed_users.filter(user__userprofile__gender='0')
+        passed_female = passed_users.filter(user__userprofile__gender='1')
+        score_average = passed_users.aggregate(score=Avg('score'))['score']
+        male_score_average = passed_male.aggregate(score=Avg('score'))['score']
+        female_score_average = passed_female.aggregate(score=Avg('score'))['score']
+        data['played_num'] = played_num
+        data['passed_num'] = passed_num
+        data['passed_proportion'] = passed_proportion
+        data['male_num'] = male.count()
+        data['female_num'] = female.count()
+        data['passed_male'] = passed_male.count()
+        data['passed_female'] = passed_female.count()
+        data['score_average'] = score_average
+        data['male_score_average'] = male_score_average
+        data['female_score_average'] = female_score_average
+        return data
 
 
 class UserAnalysisSerializer(serializers.ModelSerializer):
     """
     serializer for user data analysis
     """
-    passed = serializers.BooleanField
-
     class Meta:
         model = UserProfile
         fields = ['user', 'gender', 'level']
@@ -120,7 +149,6 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
-        print(instance.timestamp)
         data = super().to_representation(instance)
         level = OriginMedia.objects.get(id=instance.media.id).level_id
         data['level_id'] = level
