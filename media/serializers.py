@@ -82,8 +82,8 @@ class MediaListSerializer(serializers.ModelSerializer):
 
 class MediaSearchSerializer(serializers.Serializer):
     """
-        serialize search requests
-        """
+    serialize search requests
+    """
     level_id = serializers.IntegerField(allow_null=True)
 
 
@@ -101,7 +101,7 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
         origin_media = OriginMedia.objects.get(pk=instance.id)
         users = origin_media.users.all()
         # print(users.values())
-        passed_users = users.filter(score__gt=0)
+        passed_users = users.filter(score__gt=60)
         played_num = users.count()
         passed_num = passed_users.count()
         passed_proportion = None
@@ -111,9 +111,9 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
         female = users.filter(user__userprofile__gender='1')
         passed_male = passed_users.filter(user__userprofile__gender='0')
         passed_female = passed_users.filter(user__userprofile__gender='1')
-        score_average = passed_users.aggregate(score=Avg('score'))['score']
-        male_score_average = passed_male.aggregate(score=Avg('score'))['score']
-        female_score_average = passed_female.aggregate(score=Avg('score'))['score']
+        score_average = users.aggregate(score=Avg('score'))['score']
+        male_score_average = male.aggregate(score=Avg('score'))['score']
+        female_score_average = female.aggregate(score=Avg('score'))['score']
         data['played_num'] = played_num
         data['passed_num'] = passed_num
         data['passed_proportion'] = passed_proportion

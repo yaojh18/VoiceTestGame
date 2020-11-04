@@ -14,16 +14,16 @@ def create_file():
     create test files
     """
     cwd = os.getcwd()
-    if not os.path.exists(cwd+'/data/test/'):
-        os.mkdir(cwd+'/data/test/')
-    file = open(cwd+'/data/test/audio.txt', 'w')
+    if not os.path.exists(cwd + '/data/test/'):
+        os.mkdir(cwd + '/data/test/')
+    file = open(cwd + '/data/test/audio.txt', 'w')
     file.write('this is an audio')
     file.close()
-    file = open(cwd+'/data/test/video.txt', 'w')
+    file = open(cwd + '/data/test/video.txt', 'w')
     file.write('this is a video')
     file.close()
-    audio_file = open(cwd+'/data/test/audio.txt')
-    video_file = open(cwd+'/data/test/video.txt')
+    audio_file = open(cwd + '/data/test/audio.txt')
+    video_file = open(cwd + '/data/test/video.txt')
     return audio_file, video_file
 
 
@@ -31,6 +31,7 @@ class ManagerTest(TestCase):
     """
     Unity tests of ManagerViewSets
     """
+
     def setUp(self):
         Group.objects.create(name='manager')
         Group.objects.create(name='visitor')
@@ -39,28 +40,28 @@ class ManagerTest(TestCase):
             'password': '123456',
             'password2': '123456'
         }, content_type='application/json')
-        # response = self.client.post('/api/users/login/', data={
-        #     'username': 'test',
-        #     'password': '123456',
-        # }, content_type='application/json')
         self.token = json.loads(response.content)["token"]
-        # print("token:", self.token)
+        self.client.login(username='test', password='123456')
 
-    def search(self, data_id=None):
+    def search(self, level=None, name=None, page_limit=None, page_start=None):
         """
         create search request
         """
-        self.client.login(username='test', password='123456')
-        data = {
-            'level_id': data_id,
-        }
-        return self.client.post('/api/manager/search/', data=data, content_type='application/json')
+        url = '/api/manager/?'
+        if level is not None:
+            url += 'level=' + str(level) + '&'
+        if name is not None:
+            url += 'title=' + name + '&'
+        if page_limit is not None:
+            url += 'page_limit=' + str(page_limit) + '&'
+        if page_start is not None:
+            url += 'page_start=' + str(page_start) + '&'
+        return self.client.get(url, content_type='application/json')
 
-    def add(self, title, content, audio_path, video_path):
+    def create(self, title, content, audio_path, video_path):
         """
         create add request
         """
-        self.client.login(username='test', password='123456')
         data = {
             'level_id': '',
             'title': title,
@@ -68,47 +69,46 @@ class ManagerTest(TestCase):
             'audio_path': audio_path,
             'video_path': video_path
         }
-        return self.client.post('/api/manager/add/', data=data)
+        return self.client.post('/api/manager/', data=data)
 
-    def edit(self, data_id, title, content, audio_path, video_path):
+    def update(self, data_id, level_id, title, content, audio_path, video_path):
         """
         create edit request
         """
-        self.client.login(username='test', password='123456')
         data = {
-            'level_id': data_id,
+            'level_id': level_id,
             'title': title,
             'content': content,
-            'audio_path': audio_path,
-            'video_path': video_path
+            'audio_path': None,
+            'video_path': None
         }
-        return self.client.post('/api/manager/edit/', data=data)
+        return self.client.put('/api/manager/' + str(data_id) + '/', data=data, content_type='application/json')
 
-    def test_add(self):
+    def test_create(self):
         """
         test add method
         """
         audio_file, video_file = create_file()
-        response = self.add(title='test1', content='test 1',
-                            audio_path=audio_file,
-                            video_path=video_file)
+        response = self.create(title='test1', content='test 1',
+                               audio_path=audio_file,
+                               video_path=video_file)
         # print(response.content)
         self.assertEqual(response.status_code, 201)
 
-        audio_file, video_file = create_file()
-        response = self.add(title='test1', content='',
-                            audio_path=audio_file,
-                            video_path=video_file)
-        self.assertEqual(response.status_code, 400)
+        # audio_file, video_file = create_file()
+        # response = self.create(title='test1', content='',
+        #                        audio_path=audio_file,
+        #                        video_path=video_file)
+        # self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
-        if os.path.isfile(cwd+'/data/origin/audio/audio.txt'):
-            os.remove(cwd+'/data/origin/audio/audio.txt')
+        if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
+            os.remove(cwd + '/data/origin/audio/audio.txt')
         if os.path.isfile(cwd + '/data/origin/video/video.txt'):
-            os.remove(cwd+'/data/origin/video/video.txt')
+            os.remove(cwd + '/data/origin/video/video.txt')
         # os.rmdir(cwd+'/data/test/')
 
-    def test_edit(self):
+    def test_update(self):
         """
         test edit method
         """
@@ -117,23 +117,25 @@ class ManagerTest(TestCase):
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
         # print(OriginMedia.objects.values())
-        response = self.edit(data_id=0, title='test_edit', content='test edit',
-                             audio_path=audio_file,
-                             video_path=video_file)
+        data_id = OriginMedia.objects.all()[0].id
+        response = self.update(data_id=data_id, title='test_edit', content='test edit',
+                               level_id=0,
+                               audio_path=audio_file,
+                               video_path=video_file)
         # print(response.content)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
 
-        audio_file, video_file = create_file()
-        response = self.edit(data_id=101, title='test_edit', content='test edit',
-                             audio_path=audio_file,
-                             video_path=video_file)
-        self.assertEqual(response.status_code, 404)
+        # audio_file, video_file = create_file()
+        # response = self.edit(data_id=101, title='test_edit', content='test edit',
+        #                      audio_path=audio_file,
+        #                      video_path=video_file)
+        # self.assertEqual(response.status_code, 404)
 
-        audio_file, video_file = create_file()
-        response = self.edit(data_id='hh', title='', content='',
-                             audio_path=audio_file,
-                             video_path=video_file)
-        self.assertEqual(response.status_code, 400)
+        # audio_file, video_file = create_file()
+        # response = self.edit(data_id='hh', title='', content='',
+        #                      audio_path=audio_file,
+        #                      video_path=video_file)
+        # self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
@@ -151,10 +153,34 @@ class ManagerTest(TestCase):
         OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
-        response = self.search(data_id=0)
+        response = self.search()
         # print(response.content)
         self.assertEqual(response.status_code, 200)
-        response = self.search(data_id=8)
-        self.assertEqual(response.status_code, 404)
-        response = self.search(data_id='ab')
-        self.assertEqual(response.status_code, 400)
+        response = self.search(level=0)
+        self.assertEqual(response.status_code, 200)
+        response = self.search(name='test')
+        self.assertEqual(response.status_code, 200)
+        response = self.search(page_limit=2, page_start=0)
+        self.assertEqual(response.status_code, 200)
+
+        # response = self.search(data_id=8)
+        # self.assertEqual(response.status_code, 404)
+        # response = self.search(data_id='ab')
+        # self.assertEqual(response.status_code, 400)
+
+
+class ClientMediaTest(TestCase):
+    """
+    Unity tests of media APIs for wechat
+    """
+
+    def setUp(self):
+        Group.objects.create(name='manager')
+        Group.objects.create(name='visitor')
+        response = self.client.post('/api/users/registration/', data={
+            'username': 'test',
+            'password': '123456',
+            'password2': '123456'
+        }, content_type='application/json')
+        self.token = json.loads(response.content)["token"]
+        self.client.login(username='test', password='123456')

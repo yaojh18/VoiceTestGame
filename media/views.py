@@ -43,7 +43,6 @@ class ManagerViewSets(viewsets.ModelViewSet):
             page_start = min(page_start, queryset.count())
             page_end = min(page_start+page_limit, queryset.count())
             queryset = queryset.all()[page_start:page_end]
-            print(page_start,page_end)
         return queryset
 
     def get_serializer_class(self):

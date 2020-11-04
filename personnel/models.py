@@ -30,7 +30,7 @@ class UserAudio(models.Model):
         """
         get audio name
         """
-        return self.user.username + '_' + self.media.title + 'wav'
+        return self.user.username + '_' + self.media.title + '.wav'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audios')
     media = models.ForeignKey(OriginMedia, on_delete=models.CASCADE, related_name='users')
