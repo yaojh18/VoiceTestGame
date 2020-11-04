@@ -44,7 +44,7 @@ class ManagerTest(TestCase):
         self.token = json.loads(response.content)["token"]
         self.client.login(username='test', password='123456')
 
-    def search(self, level=None, name=None, page_limit=None, page_start=None):
+    def search(self, level=None, name=None, page=None, size=None):
         """
         create search request
         """
@@ -53,10 +53,10 @@ class ManagerTest(TestCase):
             url += 'level=' + str(level) + '&'
         if name is not None:
             url += 'title=' + name + '&'
-        if page_limit is not None:
-            url += 'page_limit=' + str(page_limit) + '&'
-        if page_start is not None:
-            url += 'page_start=' + str(page_start) + '&'
+        if page is not None:
+            url += 'page_limit=' + str(page) + '&'
+        if size is not None:
+            url += 'size=' + str(size) + '&'
         return self.client.get(url, content_type='application/json')
 
     def create(self, title, content, audio_path, video_path):
@@ -72,7 +72,7 @@ class ManagerTest(TestCase):
         }
         return self.client.post('/api/manager/', data=data)
 
-    def update(self, data_id, level_id, title, content, audio_path, video_path):
+    def update(self, data_id, level_id, title, content, audio_path=None, video_path=None):
         """
         create edit request
         """
@@ -93,56 +93,24 @@ class ManagerTest(TestCase):
         response = self.create(title='test1', content='test 1',
                                audio_path=audio_file,
                                video_path=video_file)
-        # print(response.content)
         self.assertEqual(response.status_code, 201)
-
-        # audio_file, video_file = create_file()
-        # response = self.create(title='test1', content='',
-        #                        audio_path=audio_file,
-        #                        video_path=video_file)
-        # self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
             os.remove(cwd + '/data/origin/audio/audio.txt')
         if os.path.isfile(cwd + '/data/origin/video/video.txt'):
             os.remove(cwd + '/data/origin/video/video.txt')
-        # os.rmdir(cwd+'/data/test/')
 
     def test_update(self):
         """
         test edit method
         """
-        audio_file, video_file = create_file()
         OriginMedia.objects.create(title='test2', content='test 2', level_id=0,
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
-        # print(OriginMedia.objects.values())
         data_id = OriginMedia.objects.all()[0].id
-        response = self.update(data_id=data_id, title='test_edit', content='test edit',
-                               level_id=0,
-                               audio_path=audio_file,
-                               video_path=video_file)
-        # print(response.content)
+        response = self.update(data_id=data_id, title='test_edit', content='test edit', level_id=0)
         self.assertEqual(response.status_code, 200)
-
-        # audio_file, video_file = create_file()
-        # response = self.edit(data_id=101, title='test_edit', content='test edit',
-        #                      audio_path=audio_file,
-        #                      video_path=video_file)
-        # self.assertEqual(response.status_code, 404)
-
-        # audio_file, video_file = create_file()
-        # response = self.edit(data_id='hh', title='', content='',
-        #                      audio_path=audio_file,
-        #                      video_path=video_file)
-        # self.assertEqual(response.status_code, 400)
-
-        cwd = os.getcwd()
-        if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
-            os.remove(cwd + '/data/origin/audio/audio.txt')
-        if os.path.isfile(cwd + '/data/origin/video/video.txt'):
-            os.remove(cwd + '/data/origin/video/video.txt')
 
     def test_search(self):
         """
@@ -155,19 +123,13 @@ class ManagerTest(TestCase):
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
         response = self.search()
-        # print(response.content)
         self.assertEqual(response.status_code, 200)
         response = self.search(level=0)
         self.assertEqual(response.status_code, 200)
         response = self.search(name='test')
         self.assertEqual(response.status_code, 200)
-        response = self.search(page_limit=2, page_start=0)
+        response = self.search(size=2, page=1)
         self.assertEqual(response.status_code, 200)
-
-        # response = self.search(data_id=8)
-        # self.assertEqual(response.status_code, 404)
-        # response = self.search(data_id='ab')
-        # self.assertEqual(response.status_code, 400)
 
 
 class ClientMediaTest(TestCase):
@@ -206,11 +168,11 @@ class ClientMediaTest(TestCase):
 
     def test_media(self):
         OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
-                                audio_path='/data/origin/audio/test3.wav',
-                                video_path='/data/origin/video/test3.mp4')
+                                   audio_path='/data/origin/audio/test3.wav',
+                                   video_path='/data/origin/video/test3.mp4')
         OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
-                                audio_path='/data/origin/audio/test4.wav',
-                                video_path='/data/origin/video/test4.mp4')
+                                   audio_path='/data/origin/audio/test4.wav',
+                                   video_path='/data/origin/video/test4.mp4')
         # print(OriginMedia.objects.all().values())
         response = self.video(level_id=1)
         self.assertEqual(response.status_code, 200)
@@ -250,30 +212,41 @@ class DataAnalysisTest(TestCase):
         self.token = json.loads(response.content)["token"]
         self.client.login(username='test', password='123456')
 
-    def media(self, title=None, page_limit=None, page_start=None):
+    def media(self, title=None, page=None, size=None):
         url = '/api/manager/data/origin/?'
         if title is not None:
             url += 'title=' + title + '&'
-        if page_limit is not None:
-            url += 'page_limit=' + str(page_limit) + '&'
-        if page_start is not None:
-            url += 'page_start=' + str(page_start) + '&'
+        if page is not None:
+            url += 'page=' + str(page) + '&'
+        if size is not None:
+            url += 'size=' + str(size) + '&'
         return self.client.get(url, content_type='application/json')
 
-    def user(self, sort=None, gender=None, page_limit=None, page_start=None):
+    def user(self, sort=None, gender=None, page=None, size=None):
         url = '/api/manager/data/user/?'
         if sort is not None:
             url += 'sort=' + sort + '&'
         if gender is not None:
             url += 'gender=' + str(gender) + '&'
-        if page_limit is not None:
-            url += 'page_limit=' + str(page_limit) + '&'
-        if page_start is not None:
-            url += 'page_start=' + str(page_start) + '&'
-        print(url)
+        if page is not None:
+            url += 'page=' + str(page) + '&'
+        if size is not None:
+            url += 'size=' + str(size) + '&'
         return self.client.get(url, content_type='application/json')
 
-    # def user_audio(self, ):
+    def user_audio(self, level=None, gender=None, start_time=None, end_time=None, sort=None):
+        url = '/api/manager/data/user_audio/?'
+        if level is not None:
+            url += 'level=' + str(level) + '&'
+        if sort is not None:
+            url += 'sort=' + sort + '&'
+        if gender is not None:
+            url += 'gender=' + str(gender) + '&'
+        if start_time is not None:
+            url += 'start_time=' + start_time + '&'
+        if end_time is not None:
+            url += 'end_time=' + end_time + '&'
+        return self.client.get(url, content_type='application/json')
 
     def test_media(self):
         OriginMedia.objects.create(title='test1', content='test 1', level_id=0,
@@ -282,7 +255,7 @@ class DataAnalysisTest(TestCase):
         OriginMedia.objects.create(title='test2', content='test 2', level_id=1,
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
-        response = self.media(title='test', page_limit=2, page_start=0)
+        response = self.media(title='test', page=1, size=2)
         self.assertEqual(response.status_code, 200)
 
     def test_user(self):
@@ -294,6 +267,21 @@ class DataAnalysisTest(TestCase):
         user.save()
         profile = UserProfile(user=user, openid='2', gender='1', level=3)
         profile.save()
-        profile.save()
-        response = self.user(sort='level', gender=0, page_limit=2, page_start=0)
+        response = self.user(sort='level', gender=0, page=1, size=2)
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_audio(self):
+        user = User(username='user1', password='123456')
+        user.save()
+        media = OriginMedia(title='test1', content='test 1', level_id=0,
+                            audio_path='/data/origin/audio/test1.wav',
+                            video_path='/data/origin/video/test1.mp4')
+        media.save()
+        audio = UserAudio(user=user, media=media, audio='/data/origin/audio/test1.wav')
+        audio.save()
+        response = self.user_audio(level=0, gender=0, sort='score')
+        self.assertEqual(response.status_code, 200)
+        response = self.user_audio(sort='level', start_time='2020-11-3')
+        self.assertEqual(response.status_code, 200)
+        response = self.user_audio(sort='time', end_time='2020-11-5')
         self.assertEqual(response.status_code, 200)

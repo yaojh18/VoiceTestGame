@@ -4,10 +4,9 @@ Views of media app
 # pylint: disable=E5142, R0901, E1101
 import datetime
 from django.db.models import Max, Min
-from rest_framework import viewsets
+from rest_framework import viewsets, status, pagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
@@ -36,13 +35,10 @@ class ManagerViewSets(viewsets.ModelViewSet):
         name = self.request.query_params.get('title', None)
         if name is not None:
             queryset = queryset.filter(title__icontains=name)
-        page_limit = self.request.query_params.get('page_limit', None)
-        if page_limit is not None:
-            page_limit = int(page_limit)
-            page_start = int(self.request.query_params.get('page_start', 0))
-            page_start = min(page_start, queryset.count())
-            page_end = min(page_start+page_limit, queryset.count())
-            queryset = queryset.all()[page_start:page_end]
+        page_object = PageNumberPagination()
+        size = self.request.query_params.get('size', None)
+        if size is not None:
+            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
     def get_serializer_class(self):
@@ -150,6 +146,16 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         return response
 
 
+class PageNumberPagination(pagination.PageNumberPagination):
+    """
+    paginator
+    """
+    page_size = 20
+    page_size_query_param = 'size'
+    page_query_param = 'page'
+    max_page_size = None
+
+
 class MediaDataViewSets(viewsets.ModelViewSet):
     """
     API on api/manager/data, data analysis for manager
@@ -166,13 +172,10 @@ class MediaDataViewSets(viewsets.ModelViewSet):
         title = self.request.query_params.get('title', None)
         if title is not None:
             queryset = queryset.filter(title__icontains=title)
-        page_limit = self.request.query_params.get('page_limit', None)
-        if page_limit is not None:
-            page_limit = int(page_limit)
-            page_start = int(self.request.query_params.get('page_start', 0))
-            page_start = min(page_start, queryset.count())
-            page_end = min(page_start+page_limit, queryset.count())
-            queryset = queryset.all()[page_start:page_end]
+        page_object = PageNumberPagination()
+        size = self.request.query_params.get('size', None)
+        if size is not None:
+            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
 
@@ -196,13 +199,10 @@ class UserDataViewSets(viewsets.ModelViewSet):
         # value of gender may be changed
         if gender is not None:
             queryset = queryset.filter(gender=gender)
-        page_limit = self.request.query_params.get('page_limit', None)
-        if page_limit is not None:
-            page_limit = int(page_limit)
-            page_start = int(self.request.query_params.get('page_start', 0))
-            page_start = min(page_start, queryset.count())
-            page_end = min(page_start + page_limit, queryset.count())
-            queryset = queryset.all()[page_start:page_end]
+        page_object = PageNumberPagination()
+        size = self.request.query_params.get('size', None)
+        if size is not None:
+            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
 
@@ -238,11 +238,15 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
             queryset = queryset.order_by('media__level_id')
         if sort == "time":
             queryset = queryset.order_by('timestamp')
-        page_limit = self.request.query_params.get('page_limit', None)
-        if page_limit is not None:
-            page_limit = int(page_limit)
-            page_start = int(self.request.query_params.get('page_start', 0))
-            page_start = min(page_start, queryset.count())
-            page_end = min(page_start + page_limit, queryset.count())
-            queryset = queryset.all()[page_start:page_end]
+        page_object = PageNumberPagination()
+        size = self.request.query_params.get('size', None)
+        if size is not None:
+            queryset = page_object.paginate_queryset(queryset, self.request)
+        # page_limit = self.request.query_params.get('page_limit', None)
+        # if page_limit is not None:
+        #     page_limit = int(page_limit)
+        #     page_start = int(self.request.query_params.get('page_start', 0))
+        #     page_start = min(page_start, queryset.count())
+        #     page_end = min(page_start + page_limit, queryset.count())
+        #     queryset = queryset.all()[page_start:page_end]
         return queryset
