@@ -13,6 +13,7 @@ from .models import OriginMedia
 from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
     MediaListSerializer, MediaSearchSerializer, MediaAnalysisSerializer, \
     UserAnalysisSerializer, UserAudioAnalysisSerializer
+DATA_LOAD_FAIL = 'Fail to find the data'
 
 
 class ManagerViewSets(viewsets.ModelViewSet):
@@ -85,7 +86,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
-                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+                return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
             video_path = media_serializer.data['video_path']
             url = video_path
@@ -104,7 +105,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
-                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+                return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
             audio_path = media_serializer.data['audio_path']
             url = audio_path
@@ -123,7 +124,7 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id)
             except OriginMedia.DoesNotExist:
-                return Response('Fail to find the data', status=status.HTTP_404_NOT_FOUND)
+                return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
             title = media_serializer.data['title']
             content = media_serializer.data['content']
