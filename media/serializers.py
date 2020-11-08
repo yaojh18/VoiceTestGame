@@ -16,14 +16,15 @@ class MediaCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        exclude = ['speaker_id']
-        extra_kwargs = {
-            'level_id': {'allow_null': True},
-        }
+        exclude = ['speaker_id', 'level_id']
+        # extra_kwargs = {
+        #     'level_id': {'allow_null': True},
+        # }
 
     def create(self, validated_data):
-        if not validated_data['level_id']:
-            validated_data['level_id'] = self.level_id_default()
+        # if not validated_data['level_id']:
+        #     validated_data['level_id'] = self.level_id_default()
+        validated_data['level_id'] = self.level_id_default()
         return super().create(validated_data)
 
     def level_id_default(self):
@@ -46,9 +47,9 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        exclude = ['speaker_id']
+        exclude = ['speaker_id', 'level_id']
         extra_kwargs = {
-            'level_id': {'allow_null': True},
+            # 'level_id': {'allow_null': True, ''},
             'title': {'allow_null': True},
             'content': {'allow_null': True},
             'audio_path': {'allow_null': True},
@@ -56,8 +57,8 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
         }
 
     def update(self, instance, validated_data):
-        if validated_data['level_id']:
-            instance.title = validated_data['level_id']
+        # if validated_data['level_id']:
+        #     instance.title = validated_data['level_id']
         if validated_data['title']:
             instance.title = validated_data['title']
         if validated_data['content']:
