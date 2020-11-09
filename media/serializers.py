@@ -154,3 +154,27 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
         level = OriginMedia.objects.get(id=instance.media.id).level_id
         data['level_id'] = level
         return data
+
+
+class MediaChartSerializer(serializers.ModelSerializer):
+    """
+    serializer for media charts
+    """
+
+
+class MediaDetailChartSerializer(serializers.ModelSerializer):
+    """
+    serializer for media charts of one level
+    """
+
+
+class UserChartSerializer(serializers.ModelSerializer):
+    """
+    serializer for user charts
+    """
+
+
+class UserAudioChartSerializer(serializers.ModelSerializer):
+    """
+    serializer for user audio charts
+    """

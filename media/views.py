@@ -179,6 +179,25 @@ class MediaDataViewSets(viewsets.ModelViewSet):
             queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
+    def get_serializer_class(self):
+        """
+        Get serializer for different actions
+        """
+        # if self.action=='chart':
+        #
+
+    @action(detail=False, methods=['GET'])
+    def chart(self, request):
+        """
+        overall data for charts
+        """
+
+    @action(detail=True, methods=['GET'])
+    def chart(self, request):
+        """
+        charts of one level
+        """
+
 
 class UserDataViewSets(viewsets.ModelViewSet):
     """
@@ -201,6 +220,12 @@ class UserDataViewSets(viewsets.ModelViewSet):
         if size is not None:
             queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
+
+    @action(detail=False, methods=['GET'])
+    def chart(self, request):
+        """
+        overall data for charts
+        """
 
 
 class UserAudioDataViewSets(viewsets.ModelViewSet):
@@ -240,3 +265,9 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
         if size is not None:
             queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
+
+    @action(detail=False, methods=['GET'])
+    def chart(self, request):
+        """
+        overall data for charts
+        """
