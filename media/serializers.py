@@ -101,24 +101,14 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         origin_media = OriginMedia.objects.get(pk=instance.id)
         users = origin_media.users.all()
-        # passed_users = users.filter(score__gt=60)
         played_num = users.count()
-        # passed_num = passed_users.count()
-        # passed_proportion = None
-        # if not played_num == 0:
-        #     passed_proportion = passed_num / played_num
         unknown = users.filter(user__userprofile__gender='0')
         male = users.filter(user__userprofile__gender='1')
         female = users.filter(user__userprofile__gender='2')
         data['played_num'] = played_num
-        # data['passed_num'] = passed_num
-        # data['passed_proportion'] = passed_proportion
         data['unknown_num'] = unknown.count()
         data['male_num'] = male.count()
         data['female_num'] = female.count()
-        # data['passed_unknown_gender'] = passed_users.filter(user__userprofile__gender='0').count()
-        # data['passed_male'] = passed_users.filter(user__userprofile__gender='1').count()
-        # data['passed_female'] = passed_users.filter(user__userprofile__gender='2').count()
         data['score_average'] = users.aggregate(score=Avg('score'))['score']
         data['unknown_score_average'] = unknown.aggregate(score=Avg('score'))['score']
         data['male_score_average'] = male.aggregate(score=Avg('score'))['score']
@@ -186,14 +176,13 @@ class MediaChartSerializer(serializers.ModelSerializer):
         male_scores = []
         female_scores = []
         for i in range(10):
-            score = users.filter(Q(score__gt=i * 10) & Q(score__lte=(i + 1) * 10)).count()
-            unknown_score = unknown.filter(Q(score__gt=i * 10) & Q(score__lte=(i + 1) * 10)).count()
-            male_score = male.filter(Q(score__gt=i * 10) & Q(score__lte=(i + 1) * 10)).count()
-            female_score = female.filter(Q(score__gt=i * 10) & Q(score__lte=(i + 1) * 10)).count()
-            scores.append(score)
-            unknown_scores.append(unknown_score)
-            male_scores.append(male_score)
-            female_scores.append(female_score)
+            scores.append(users.filter(Q(score__gt=i * 10) & Q(score__lte=(i + 1) * 10)).count())
+            unknown_scores.append(unknown.filter(Q(score__gt=i * 10)
+                                                 & Q(score__lte=(i + 1) * 10)).count())
+            male_scores.append(male.filter(Q(score__gt=i * 10)
+                                           & Q(score__lte=(i + 1) * 10)).count())
+            female_scores.append(female.filter(Q(score__gt=i * 10)
+                                               & Q(score__lte=(i + 1) * 10)).count())
         data['level_id'] = instance.level_id
         data['title'] = instance.title
         data['played_num'] = users.count()
@@ -201,6 +190,7 @@ class MediaChartSerializer(serializers.ModelSerializer):
         data['male_num'] = male.count()
         data['female_num'] = female.count()
         data['score_average'] = users.aggregate(score=Avg('score'))['score']
+        data['unknown_score_average'] = unknown.aggregate(score=Avg('score'))['score']
         data['male_score_average'] = male.aggregate(score=Avg('score'))['score']
         data['female_score_average'] = female.aggregate(score=Avg('score'))['score']
         data['scores'] = scores
@@ -225,13 +215,14 @@ class UserChartSerializer(serializers.ModelSerializer):
         female = users.filter(gender='2')
         levels = []
         level_num = OriginMedia.objects.all().count()
-        for i in range(level_num):
+        for _ in range(level_num+1):
             levels.append(0)
-            # level = users.filter(users.aggregate(level=Max('user__audios__media__level_id'))['level'] == i).count()
         for item in users:
             index = item.user.audios.aggregate(level=Max('media__level_id'))['level']
             if index is not None:
-                levels[index] += 1
+                levels[index+1] += 1
+            else:
+                levels[0] += 1
         data = dict()
         data['num'] = users.count()
         data['unknown_num'] = unknown.count()
@@ -275,10 +266,3 @@ class UserAudioChartSerializer(serializers.ModelSerializer):
         data['female_num'] = female.count()
         data['time_count'] = time_count
         return data
-# class MediaChartSerializer(serializers.ModelSerializer):
-#     """
-#     serializer for media charts
-#     """
-#     class Meta:
-#         model = OriginMedia
-#         fields =

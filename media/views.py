@@ -1,7 +1,7 @@
 """
 Views of media app
 """
-# pylint: disable=E5142, R0901, E1101
+# pylint: disable=E5142, R0901, E1101, C0103, W0613
 import datetime
 from django.db.models import Max
 from rest_framework import viewsets, status, pagination
@@ -188,12 +188,6 @@ class MediaDataViewSets(viewsets.ModelViewSet):
         if self.action == 'chart':
             return MediaChartSerializer
         return MediaAnalysisSerializer
-
-    # @action(detail=False, methods=['GET'])
-    # def chart(self, request):
-    #     """
-    #     overall data for charts
-    #     """
 
     @action(detail=True, methods=['GET'])
     def chart(self, request, pk=None):
