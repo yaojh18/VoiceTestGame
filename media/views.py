@@ -227,11 +227,21 @@ class UserDataViewSets(viewsets.ModelViewSet):
             queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
+    def get_serializer_class(self):
+        """
+        get serializer class
+        """
+        if self.action == 'chart':
+            return UserChartSerializer
+        return UserAnalysisSerializer
+
     @action(detail=False, methods=['GET'])
     def chart(self, request):
         """
         overall data for charts
         """
+        serializer = self.get_serializer(self.queryset)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserAudioDataViewSets(viewsets.ModelViewSet):

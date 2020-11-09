@@ -2,7 +2,7 @@
 Serializers for media app
 """
 # pylint: disable=E5142, W0223, W0221, R0201\
-from django.db.models import Avg, Q
+from django.db.models import Max, Avg, Q
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from personnel.models import UserAudio, UserProfile
@@ -137,7 +137,11 @@ class UserAnalysisSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['user'] = User.objects.get(pk=instance.user.id).username
+        user = User.objects.get(pk=instance.user.id)
+        data['user'] = user.username
+        data['level'] = user.audios.aggregate(level=Max('media__level_id'))['level']
+        if data['level'] is None:
+            data['level'] = 0
         return data
 
 
@@ -210,6 +214,30 @@ class UserChartSerializer(serializers.ModelSerializer):
     """
     serializer for user charts
     """
+    class Meta:
+        model = UserProfile
+
+    def to_representation(self, instance):
+        users = UserProfile.objects.all()
+        unknown = users.filter(gender="0")
+        male = users.filter(gender='1')
+        female = users.filter(gender='2')
+        levels = []
+        level_num = OriginMedia.objects.all().count()
+        for i in range(level_num):
+            levels.append(0)
+            # level = users.filter(users.aggregate(level=Max('user__audios__media__level_id'))['level'] == i).count()
+        for item in users:
+            index = item.user.audios.aggregate(level=Max('media__level_id'))['level']
+            if index is not None:
+                levels[index] += 1
+        data = dict()
+        data['num'] = users.count()
+        data['unknown_num'] = unknown.count()
+        data['male_num'] = male.count()
+        data['female_num'] = female.count()
+        data['level_count'] = levels
+        return data
 
 
 class UserAudioChartSerializer(serializers.ModelSerializer):
