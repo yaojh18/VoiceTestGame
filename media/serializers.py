@@ -214,6 +214,7 @@ class UserChartSerializer(serializers.ModelSerializer):
     """
     serializer for user charts
     """
+
     class Meta:
         model = UserProfile
 
@@ -245,6 +246,35 @@ class UserAudioChartSerializer(serializers.ModelSerializer):
     serializer for user audio charts
     """
 
+    class Meta:
+        model = UserAudio
+
+    def to_representation(self, instance):
+        audio = UserAudio.objects.all().order_by('timestamp')
+        unknown = audio.filter(user__userprofile__gender="0")
+        male = audio.filter(user__userprofile__gender='1')
+        female = audio.filter(user__userprofile__gender='2')
+        time_count = dict()
+        time_count[audio[0].timestamp.date().strftime('%Y-%m-%d')] = 1
+        last = 0
+        for i in range(1, audio.count()):
+            if audio[i].timestamp.date() == audio[i - 1].timestamp.date():
+                continue
+            time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = i - last
+            last = i
+        i = audio.count()
+        if i > 1 and \
+                audio[i - 1].timestamp.date() == audio[i - 2].timestamp.date():
+            time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] += 1
+        else:
+            time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = 1
+        data = dict()
+        data['num'] = audio.count()
+        data['unknown_num'] = unknown.count()
+        data['male_num'] = male.count()
+        data['female_num'] = female.count()
+        data['time_count'] = time_count
+        return data
 # class MediaChartSerializer(serializers.ModelSerializer):
 #     """
 #     serializer for media charts
