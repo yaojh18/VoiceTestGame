@@ -12,7 +12,9 @@ from personnel.models import UserAudio, UserProfile
 from .models import OriginMedia
 from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
     MediaListSerializer, MediaSearchSerializer, MediaAnalysisSerializer, \
-    UserAnalysisSerializer, UserAudioAnalysisSerializer
+    UserAnalysisSerializer, UserAudioAnalysisSerializer, MediaChartSerializer, \
+    UserChartSerializer, UserAudioChartSerializer
+
 DATA_LOAD_FAIL = 'Fail to find the data'
 
 
@@ -183,20 +185,24 @@ class MediaDataViewSets(viewsets.ModelViewSet):
         """
         Get serializer for different actions
         """
-        # if self.action=='chart':
-        #
+        if self.action == 'chart':
+            return MediaChartSerializer
+        return MediaAnalysisSerializer
 
-    @action(detail=False, methods=['GET'])
-    def chart(self, request):
-        """
-        overall data for charts
-        """
+    # @action(detail=False, methods=['GET'])
+    # def chart(self, request):
+    #     """
+    #     overall data for charts
+    #     """
 
     @action(detail=True, methods=['GET'])
-    def chart(self, request):
+    def chart(self, request, pk=None):
         """
         charts of one level
         """
+        media = self.get_object()
+        serializer = self.get_serializer(media)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserDataViewSets(viewsets.ModelViewSet):
