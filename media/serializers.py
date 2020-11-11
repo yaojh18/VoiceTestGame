@@ -34,26 +34,11 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
         model = OriginMedia
         exclude = ['speaker_id', 'level_id']
         extra_kwargs = {
-            # 'level_id': {'allow_null': True, ''},
-            'title': {'allow_null': True},
-            'content': {'allow_null': True},
-            'audio_path': {'allow_null': True},
-            'video_path': {'allow_null': True},
+            'title': {'required': False},
+            'content': {'required': False},
+            'audio_path': {'required': False},
+            'video_path': {'required': False},
         }
-
-    def update(self, instance, validated_data):
-        # if validated_data['level_id']:
-        #     instance.title = validated_data['level_id']
-        if validated_data['title']:
-            instance.title = validated_data['title']
-        if validated_data['content']:
-            instance.content = validated_data['content']
-        if validated_data['audio_path']:
-            instance.audio_path = validated_data['audio_path']
-        if validated_data['video_path']:
-            instance.video_path = validated_data['video_path']
-        instance.save()
-        return instance
 
 
 class MediaListSerializer(serializers.ModelSerializer):
@@ -71,6 +56,7 @@ class MediaSearchSerializer(serializers.Serializer):
     serialize search requests
     """
     level_id = serializers.IntegerField(allow_null=True)
+    type_id = serializers.CharField(max_length=1)
 
 
 class MediaAnalysisSerializer(serializers.ModelSerializer):

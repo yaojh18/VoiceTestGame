@@ -186,10 +186,6 @@ class MediaDataViewSets(viewsets.GenericViewSet):
         title = self.request.query_params.get('title', None)
         if title is not None:
             queryset = queryset.filter(title__icontains=title)
-        # page_object = PageNumberPagination()
-        # size = self.request.query_params.get('size', None)
-        # if size is not None:
-        #     queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
     def get_serializer_class(self):
@@ -236,10 +232,6 @@ class UserDataViewSets(viewsets.GenericViewSet):
         gender = self.request.query_params.get('gender', None)
         if gender is not None:
             queryset = queryset.filter(gender=gender)
-        # page_object = PageNumberPagination()
-        # size = self.request.query_params.get('size', None)
-        # if size is not None:
-        #     queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
     def get_serializer_class(self):
@@ -301,10 +293,6 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
             queryset = queryset.order_by('media__level_id')
         if sort == "time":
             queryset = queryset.order_by('timestamp')
-        # page_object = PageNumberPagination()
-        # size = self.request.query_params.get('size', None)
-        # if size is not None:
-        #     queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
     def get_serializer_class(self):
