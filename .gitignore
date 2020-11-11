@@ -13,3 +13,6 @@ db.sqlite3
 #temp files
 data/*
 !data/test/
+
+#css
+static

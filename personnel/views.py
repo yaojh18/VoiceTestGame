@@ -138,6 +138,8 @@ class WechatViewSet(viewsets.GenericViewSet,
                 level = user.audios.aggregate(level=Max('media__level_id'))
                 if level['level'] is None:
                     level['level'] = 0
+                else:
+                    level['level'] += 1
                 return Response(level, status=status.HTTP_200_OK)
             return Response({'msg': res.errors}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'msg': 'Manager has no profile'}, status=status.HTTP_404_NOT_FOUND)
@@ -173,7 +175,9 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         params = self.request.query_params
         if user.has_perm(AUDIO_PERMISSION) and 'level_id' in params:
             length = params.get('length', default=5)
-            media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
+            level_id = params.get('level_id')
+            type_id = params.get('type_id', default='0')
+            media_id = OriginMedia.objects.filter(level_id=level_id, type=type).first()
             if media_id is not None:
                 users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
                 if users is not None:
@@ -188,7 +192,9 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         user = self.request.user
         params = self.request.query_params
         if user.has_perm(AUDIO_PERMISSION) and 'level_id' in params:
-            media_id = OriginMedia.objects.filter(level_id=params.get('level_id')).first()
+            level_id = params.get('level_id')
+            type_id = params.get('type_id', default='0')
+            media_id = OriginMedia.objects.filter(level_id=level_id, type_id=type_id).first()
             if media_id is not None:
                 user_id = params.get('user_id', default=user.id)
                 user_audio = UserAudio.objects.filter(media_id=media_id, user_id=user_id).order_by('-score').first()
