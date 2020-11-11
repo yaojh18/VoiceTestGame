@@ -1,7 +1,7 @@
 """
 Serializers for personnel.
 """
-# pylint: disable=E5142, W0223, W0221, R0201
+# pylint: disable=E5142, W0223, W0221, R0201, C0301
 import datetime
 import requests
 from django.contrib.auth import authenticate
@@ -164,7 +164,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'password', 'email', 'name', 'password_confirm', 'token']
         extra_kwargs = {
-            'email': {'write_only': True, 'required': 'False'},
+            'email': {'write_only': True, 'required': False},
             'password': {'write_only': True},
             'username': {'write_only': True, 'required': False}
         }
@@ -244,7 +244,7 @@ class UserAudioSerializer(serializers.ModelSerializer):
     Determine the format of user audio data when writing.
     """
     level_id = serializers.IntegerField(write_only=True)
-    type_id = serializers.CharField(write_only=True)
+    type_id = serializers.CharField(write_only=True, default='0')
 
     class Meta:
         model = UserAudio
