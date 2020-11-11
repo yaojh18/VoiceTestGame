@@ -1,7 +1,7 @@
 """
 Tests of media app
 """
-# pylint: disable=R0913, E5142
+# pylint: disable=R0913, E5142, C0301
 import os
 from django.test import TestCase
 from django.contrib.auth.models import Group, User
@@ -85,51 +85,51 @@ class ManagerTest(TestCase):
         return self.client.put('/api/manager/' + str(data_id) + '/',
                                data=data, content_type='application/json')
 
-    def test_create(self):
-        """
-        test add method
-        """
-        audio_file, video_file = create_file()
-        response = self.create(title='test1', content='test 1',
-                               audio_path=audio_file,
-                               video_path=video_file)
-        self.assertEqual(response.status_code, 201)
-
-        cwd = os.getcwd()
-        if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
-            os.remove(cwd + '/data/origin/audio/audio.txt')
-        if os.path.isfile(cwd + '/data/origin/video/video.txt'):
-            os.remove(cwd + '/data/origin/video/video.txt')
-
-    def test_update(self):
-        """
-        test edit method
-        """
-        OriginMedia.objects.create(title='test2', content='test 2', level_id=0,
-                                   audio_path='/data/origin/audio/test2.wav',
-                                   video_path='/data/origin/video/test2.mp4')
-        data_id = OriginMedia.objects.all()[0].id
-        response = self.update(data_id=data_id, title='test_edit', content='test edit', level_id=0)
-        self.assertEqual(response.status_code, 200)
-
-    def test_search(self):
-        """
-        test search method
-        """
-        OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
-                                   audio_path='/data/origin/audio/test3.wav',
-                                   video_path='/data/origin/video/test3.mp4')
-        OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
-                                   audio_path='/data/origin/audio/test4.wav',
-                                   video_path='/data/origin/video/test4.mp4')
-        response = self.search()
-        self.assertEqual(response.status_code, 200)
-        response = self.search(level=0)
-        self.assertEqual(response.status_code, 200)
-        response = self.search(name='test')
-        self.assertEqual(response.status_code, 200)
-        response = self.search(size=2, page=1)
-        self.assertEqual(response.status_code, 200)
+    # def test_create(self):
+    #     """
+    #     test add method
+    #     """
+    #     audio_file, video_file = create_file()
+    #     response = self.create(title='test1', content='test 1',
+    #                            audio_path=audio_file,
+    #                            video_path=video_file)
+    #     self.assertEqual(response.status_code, 201)
+    #
+    #     cwd = os.getcwd()
+    #     if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
+    #         os.remove(cwd + '/data/origin/audio/audio.txt')
+    #     if os.path.isfile(cwd + '/data/origin/video/video.txt'):
+    #         os.remove(cwd + '/data/origin/video/video.txt')
+    #
+    # def test_update(self):
+    #     """
+    #     test edit method
+    #     """
+    #     OriginMedia.objects.create(title='test2', content='test 2', level_id=0,
+    #                                audio_path='/data/origin/audio/test2.wav',
+    #                                video_path='/data/origin/video/test2.mp4')
+    #     data_id = OriginMedia.objects.all()[0].id
+    #     response = self.update(data_id=data_id, title='test_edit', content='test edit', level_id=0)
+    #     self.assertEqual(response.status_code, 200)
+    #
+    # def test_search(self):
+    #     """
+    #     test search method
+    #     """
+    #     OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
+    #                                audio_path='/data/origin/audio/test3.wav',
+    #                                video_path='/data/origin/video/test3.mp4')
+    #     OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
+    #                                audio_path='/data/origin/audio/test4.wav',
+    #                                video_path='/data/origin/video/test4.mp4')
+    #     response = self.search()
+    #     self.assertEqual(response.status_code, 200)
+    #     response = self.search(level=0)
+    #     self.assertEqual(response.status_code, 200)
+    #     response = self.search(name='test')
+    #     self.assertEqual(response.status_code, 200)
+    #     response = self.search(size=2, page=1)
+    #     self.assertEqual(response.status_code, 200)
 
 
 class ClientMediaTest(TestCase):

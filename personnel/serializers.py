@@ -96,32 +96,6 @@ def get_user_token(user):
     return jwt_response_payload_handler(token, user)['token']
 
 
-class ReadGroupInfo(serializers.RelatedField):
-    """
-    How to display Group informations.
-    """
-    def to_representation(self, obj):
-        group = obj.first()
-        if hasattr(obj, 'pk'):
-            return {"id": group.pk, "name": group.name}
-        return {"id": None, "name": None}
-
-
-class UserInfoSerializer(serializers.ModelSerializer):
-    """
-    Display user information for admin.
-    """
-    groups = ReadGroupInfo(read_only=True)
-
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'name', 'email', 'is_superuser',
-                    'date_joined', 'last_login', 'groups']
-        extra_kwargs = {
-            'name': {'source': 'first_name'},
-        }
-
-
 class UserLoginSerializer(serializers.Serializer):
     """
     Determine the format of user data when logging in.
@@ -166,7 +140,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'email': {'write_only': True, 'required': False},
             'password': {'write_only': True},
-            'username': {'write_only': True, 'required': False}
+            'username': {'write_only': True, 'required': True}
         }
 
     def validate(self, attrs):
@@ -187,26 +161,29 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     Determine the format of user data when registering.
     """
-    name = serializers.CharField(source='first_name', write_only=True, required=False)
-    password_old = serializers.CharField(max_length=128, required=True, write_only=True)
+    name = serializers.CharField(source='first_name', required=False)
+    password_old = serializers.CharField(max_length=128, required=False, write_only=True)
 
     class Meta:
         model = User
         fields = ['username', 'password', 'email', 'name', 'password_old']
         extra_kwargs = {
-            'email': {'write_only': True, 'required': 'False'},
-            'password': {'write_only': True},
-            'username': {'write_only': True, 'required': False, 'validators': []}
+            'email': {'required': False},
+            'password': {'write_only': True, 'required': False},
+            'username': {'validators': []}
         }
 
     def validate(self, attrs):
         user = User.objects.filter(username=attrs['username']).first()
         if user is None:
             raise serializers.ValidationError('Please input the correct username.')
-        password_old = attrs.pop('password_old')
-        if not user.check_password(password_old):
-            raise serializers.ValidationError('Please input the correct password.')
-        attrs['password'] = make_password(attrs['password'])
+        if 'password' in attrs:
+            if 'password_old' not in attrs:
+                raise serializers.ValidationError('Please input the old password.')
+            password_old = attrs.pop('password_old')
+            if not user.check_password(password_old):
+                raise serializers.ValidationError('Please input the correct password.')
+            attrs['password'] = make_password(attrs['password'])
         self.instance = user
         return attrs
 
@@ -216,16 +193,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
     Determine the format of userporfile data when updating.
     """
     nick_name = serializers.CharField(source='first_name')
-    gender = serializers.CharField(source='userprofile.gender', write_only=True)
-    city = serializers.CharField(source='userprofile.city', write_only=True)
-    province = serializers.CharField(source='userprofile.province', write_only=True)
     avatar_url = serializers.CharField(source='userprofile.avatar_url')
+    gender = serializers.CharField(source='userprofile.gender')
+    city = serializers.CharField(source='userprofile.city')
+    province = serializers.CharField(source='userprofile.province')
+
     user_id = serializers.IntegerField(source='id', read_only=True)
-    score = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url', 'score']
+        fields = ['user_id', 'nick_name', 'gender', 'city', 'province', 'avatar_url']
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data['first_name']
@@ -237,6 +214,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
         instance.save()
         profile.save()
         return instance
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    """
+    Determine the format of userporfile data when updating.
+    """
+    nick_name = serializers.CharField(source='first_name')
+    avatar_url = serializers.CharField(source='userprofile.avatar_url')
+    user_id = serializers.IntegerField(source='id', read_only=True)
+    score = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['user_id', 'nick_name', 'avatar_url', 'score']
 
 
 class UserAudioSerializer(serializers.ModelSerializer):

@@ -4,11 +4,11 @@ Views of media app
 # pylint: disable=E5142, R0901, E1101
 import datetime
 from django.db.models import Max
-from rest_framework import viewsets, status, pagination
+from rest_framework import viewsets, status, pagination, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from personnel.models import UserAudio, UserProfile
+from personnel.models import UserAudio, UserProfile, ManagePermission
 from .models import OriginMedia
 from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
     MediaListSerializer, MediaSearchSerializer, MediaAnalysisSerializer, \
@@ -16,30 +16,29 @@ from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
 DATA_LOAD_FAIL = 'Fail to find the data'
 
 
-class ManagerViewSets(viewsets.ModelViewSet):
+class ManagerViewSets(mixins.CreateModelMixin,
+                       mixins.RetrieveModelMixin,
+                       mixins.UpdateModelMixin,
+                       viewsets.GenericViewSet):
     """
     API on api/manager, media data access of for manager
     """
-    queryset = OriginMedia.objects.all().order_by('level_id')
-    serializer_class = MediaCreateSerializer
-    list_serializer = MediaListSerializer
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
 
     def get_queryset(self):
         """
         Get queryset
         """
         queryset = OriginMedia.objects.all().order_by('level_id')
-        level = self.request.query_params.get('level_id', None)
-        if level is not None:
-            queryset = queryset.filter(level_id=level)
-        title = self.request.query_params.get('title', None)
+        level_id = self.request.query_params.get('level_id')
+        if level_id is not None:
+            queryset = queryset.filter(level_id=level_id)
+        type_id = self.request.query_params.get('type_id')
+        if type_id is not None:
+            queryset = queryset.filter(type_id=type_id)
+        title = self.request.query_params.get('title')
         if title is not None:
             queryset = queryset.filter(title__icontains=title)
-        page_object = PageNumberPagination()
-        size = self.request.query_params.get('size', None)
-        if size is not None:
-            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
     def get_serializer_class(self):
@@ -47,12 +46,20 @@ class ManagerViewSets(viewsets.ModelViewSet):
         Get serializer for different actions
         """
         if self.action == 'list':
-            return self.list_serializer
+            return MediaListSerializer
         if self.action == 'create':
             return MediaCreateSerializer
-        if self.action == 'update':
-            return MediaUpdateSerializer
         return MediaUpdateSerializer
+
+    def list(self, request):
+        """
+        Mixin list method.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = PageNumberPagination()
+        queryset = paginator.paginate_queryset(queryset, request)
+        serializer = self.get_serializer(queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ClientMediaViewSets(viewsets.ModelViewSet):

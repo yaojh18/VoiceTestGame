@@ -116,6 +116,7 @@ class LogTest(TestCase):
         Test to update user data.
         """
         self.registration('test3','123456','123456')
+        self.client.login(username='test3', password='123456')
         data = {
             'username': 'test3',
             'password': '1234567',
@@ -194,10 +195,10 @@ class WechatTest(TestCase):
             'city': 'beijing',
             'province': 'beijing',
         }
-        response = self.client.post('/api/wechat/profile/', data=data)
+        response = self.client.post('/api/wechat/', data=data)
         self.assertNotEqual(response.status_code, 200)
         data['avatar_url'] = 'https://baidu.com/'
-        response = self.client.post('/api/wechat/profile/', data=data)
+        response = self.client.post('/api/wechat/', data=data)
         self.assertEqual(response.status_code, 200)
 
     def test_audio(self):
