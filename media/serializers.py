@@ -34,10 +34,11 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
         model = OriginMedia
         exclude = ['speaker_id', 'level_id']
         extra_kwargs = {
-            'title': {'required': False},
-            'content': {'required': False},
-            'audio_path': {'required': False},
-            'video_path': {'required': False},
+            'type_id': {'required': False, 'allow_null': True},
+            'title': {'required': False, 'allow_null': True},
+            'content': {'required': False, 'allow_null': True},
+            'audio_path': {'required': False, 'allow_null': True},
+            'video_path': {'required': False, 'allow_null': True},
         }
 
 

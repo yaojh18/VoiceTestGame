@@ -19,9 +19,9 @@ DATA_LOAD_FAIL = 'Fail to find the data'
 
 
 class ManagerViewSets(mixins.CreateModelMixin,
-                       mixins.RetrieveModelMixin,
-                       mixins.UpdateModelMixin,
-                       viewsets.GenericViewSet):
+                      mixins.RetrieveModelMixin,
+                      mixins.UpdateModelMixin,
+                      viewsets.GenericViewSet):
     """
     API on api/manager, media data access of for manager
     """
@@ -151,7 +151,7 @@ class ClientMediaViewSets(viewsets.GenericViewSet,
             return Response({'title': title, 'text': content}, status=status.HTTP_200_OK)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         response = super().list(request)
         user_id = self.request.user
         titles = []

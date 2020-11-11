@@ -35,7 +35,7 @@ class OriginMedia(models.Model):
         Generate level id automatically.
         """
         media = OriginMedia.objects.filter(type_id=self.type_id)
-        if media is None:
+        if media.count() == 0:
             return 0
         return media.aggregate(max=models.Max('level_id'))['max'] + 1
 
