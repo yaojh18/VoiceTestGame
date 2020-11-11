@@ -17,27 +17,12 @@ class MediaCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OriginMedia
         exclude = ['speaker_id', 'level_id']
-        # extra_kwargs = {
-        #     'level_id': {'allow_null': True},
-        # }
 
     def create(self, validated_data):
-        # if not validated_data['level_id']:
-        #     validated_data['level_id'] = self.level_id_default()
-        validated_data['level_id'] = self.level_id_default()
-        return super().create(validated_data)
-
-    def level_id_default(self):
-        """
-        return default value of level_id
-        """
-        if OriginMedia.objects.count() == 0:
-            return 0
-        level_id_list = OriginMedia.objects.order_by('level_id').values_list('level_id')
-        num = 0
-        while OriginMedia.objects.count() > num and level_id_list[num][0] == num:
-            num += 1
-        return num
+        media = OriginMedia(**validated_data)
+        media.level_id = media.generate_level_id
+        media.save()
+        return media
 
 
 class MediaUpdateSerializer(serializers.ModelSerializer):
@@ -78,7 +63,7 @@ class MediaListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        fields = ['id', 'level_id', 'title']
+        fields = ['id', 'level_id', 'type_id', 'title']
 
 
 class MediaSearchSerializer(serializers.Serializer):
@@ -95,7 +80,7 @@ class MediaAnalysisSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        fields = ['id', 'level_id', 'title']
+        fields = ['id', 'type_id', 'level_id', 'title']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -162,7 +147,7 @@ class MediaChartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginMedia
-        fields = ['id', 'level_id', 'title']
+        fields = ['id', 'type_id', 'level_id', 'title']
 
     def to_representation(self, instance):
         data = dict()
@@ -184,6 +169,7 @@ class MediaChartSerializer(serializers.ModelSerializer):
             female_scores.append(female.filter(Q(score__gt=i * 10)
                                                & Q(score__lte=(i + 1) * 10)).count())
         data['level_id'] = instance.level_id
+        data['type_id'] = instance.type_id
         data['title'] = instance.title
         data['played_num'] = users.count()
         data['unknown_num'] = unknown.count()
