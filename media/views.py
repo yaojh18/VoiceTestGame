@@ -1,7 +1,7 @@
 """
 Views of media app
 """
-# pylint: disable=E5142, R0901, E1101
+# pylint: disable=E5142, R0901, E1101, C0103, W0613
 import datetime
 from django.db.models import Max
 from rest_framework import viewsets, status, pagination, mixins
@@ -12,7 +12,9 @@ from personnel.models import UserAudio, UserProfile, ManagePermission
 from .models import OriginMedia
 from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
     MediaListSerializer, MediaSearchSerializer, MediaAnalysisSerializer, \
-    UserAnalysisSerializer, UserAudioAnalysisSerializer
+    UserAnalysisSerializer, UserAudioAnalysisSerializer, MediaChartSerializer, \
+    UserChartSerializer, UserAudioChartSerializer
+
 DATA_LOAD_FAIL = 'Fail to find the data'
 
 
@@ -62,13 +64,21 @@ class ManagerViewSets(mixins.CreateModelMixin,
         return paginator.get_paginated_response(serializer.data)
 
 
-class ClientMediaViewSets(viewsets.ModelViewSet):
+class ClientMediaViewSets(viewsets.GenericViewSet,
+                          mixins.ListModelMixin):
     """
     API on api/media, media data access for client
     """
     queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = MediaCreateSerializer
     permission_classes = [IsAuthenticated, ]
+
+    def get_queryset(self):
+        queryset = OriginMedia.objects.all().order_by('level_id')
+        type_id = self.request.query_params.get('type_id')
+        if type_id is not None:
+            queryset = queryset.filter(type_id=type_id)
+        return queryset
 
     def get_serializer_class(self):
         """
@@ -90,8 +100,9 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         search_serializer = MediaSearchSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = request.data['level_id']
+            type_id = request.data['type_id']
             try:
-                media_data = OriginMedia.objects.get(level_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id, type_id=type_id)
             except OriginMedia.DoesNotExist:
                 return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
@@ -109,8 +120,9 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         search_serializer = MediaSearchSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = request.data['level_id']
+            type_id = request.data['type_id']
             try:
-                media_data = OriginMedia.objects.get(level_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id, type_id=type_id)
             except OriginMedia.DoesNotExist:
                 return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
@@ -128,8 +140,9 @@ class ClientMediaViewSets(viewsets.ModelViewSet):
         search_serializer = MediaSearchSerializer(data=request.data)
         if search_serializer.is_valid():
             data_id = request.data['level_id']
+            type_id = request.data['type_id']
             try:
-                media_data = OriginMedia.objects.get(level_id=data_id)
+                media_data = OriginMedia.objects.get(level_id=data_id, type_id=type_id)
             except OriginMedia.DoesNotExist:
                 return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
@@ -164,7 +177,7 @@ class PageNumberPagination(pagination.PageNumberPagination):
     max_page_size = None
 
 
-class MediaDataViewSets(viewsets.ModelViewSet):
+class MediaDataViewSets(viewsets.GenericViewSet):
     """
     API on api/manager/data, data analysis for manager
     """
@@ -180,14 +193,37 @@ class MediaDataViewSets(viewsets.ModelViewSet):
         title = self.request.query_params.get('title', None)
         if title is not None:
             queryset = queryset.filter(title__icontains=title)
-        page_object = PageNumberPagination()
-        size = self.request.query_params.get('size', None)
-        if size is not None:
-            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
 
+    def get_serializer_class(self):
+        """
+        Get serializer for different actions
+        """
+        if self.action == 'chart':
+            return MediaChartSerializer
+        return MediaAnalysisSerializer
 
-class UserDataViewSets(viewsets.ModelViewSet):
+    @action(detail=True, methods=['GET'])
+    def chart(self, request, pk=None):
+        """
+        charts of one level
+        """
+        media = self.get_object()
+        serializer = self.get_serializer(media)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def list(self, request):
+        """
+        Mixin list method.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = PageNumberPagination()
+        queryset = paginator.paginate_queryset(queryset, request)
+        serializer = self.get_serializer(queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class UserDataViewSets(viewsets.GenericViewSet):
     """
     API on api/manager/data/user, data analysis of user data for manager
     """
@@ -203,11 +239,33 @@ class UserDataViewSets(viewsets.ModelViewSet):
         gender = self.request.query_params.get('gender', None)
         if gender is not None:
             queryset = queryset.filter(gender=gender)
-        page_object = PageNumberPagination()
-        size = self.request.query_params.get('size', None)
-        if size is not None:
-            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
+
+    def get_serializer_class(self):
+        """
+        get serializer class
+        """
+        if self.action == 'chart':
+            return UserChartSerializer
+        return UserAnalysisSerializer
+
+    @action(detail=False, methods=['GET'])
+    def chart(self, request):
+        """
+        overall data for charts
+        """
+        serializer = self.get_serializer(self.queryset)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def list(self, request):
+        """
+        Mixin list method.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = PageNumberPagination()
+        queryset = paginator.paginate_queryset(queryset, request)
+        serializer = self.get_serializer(queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class UserAudioDataViewSets(viewsets.ModelViewSet):
@@ -242,8 +300,30 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
             queryset = queryset.order_by('media__level_id')
         if sort == "time":
             queryset = queryset.order_by('timestamp')
-        page_object = PageNumberPagination()
-        size = self.request.query_params.get('size', None)
-        if size is not None:
-            queryset = page_object.paginate_queryset(queryset, self.request)
         return queryset
+
+    def get_serializer_class(self):
+        """
+        get serializer class
+        """
+        if self.action == 'chart':
+            return UserAudioChartSerializer
+        return UserAudioAnalysisSerializer
+
+    @action(detail=False, methods=['GET'])
+    def chart(self, request):
+        """
+        overall data for charts
+        """
+        serializer = self.get_serializer(self.queryset)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def list(self, request):
+        """
+        Mixin list method.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = PageNumberPagination()
+        queryset = paginator.paginate_queryset(queryset, request)
+        serializer = self.get_serializer(queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)

@@ -27,42 +27,79 @@
 #### 数据列表
 - url: api/manager
 - method: GET
-- request: 在url后加?param={}进行查找, 参数包括：\
-    level: 关卡号  title: 标题（关键词包含查找）\
-    size: 分页，一页的数据条数，若没有此项则不进行分页  page: 页数，从1开始
+- request: 在url后加?param={}进行查找, 参数之间使用&连接，参数包括：\
+    level: 关卡号      title: 标题（关键词包含查找）\
+    size: 分页，一页的数据条数，若没有此项则不进行分页    page: 页数，从1开始
 - response: list[dict{id, level_id, title}] (由dict组成的列表)
 #### 数据分析：音视频数据
+##### 列表
 - url: api/manager/data/origin
 - method: GET
 - request: 在url后加?param={}, 参数包括：\
     title: 按标题查找\
     分页: size和page，与"数据列表"中相同
-- response: dict{\
-    'played_num': 该关卡游戏总次数  
-    'passed_num': 该关卡通过次数  
-    'passed_proportion': 通过率\
-    'male_num': 男性游戏次数  
-    'female_num': 女性游戏次数  
-    'passed_male': 男性通过次数  
-    'passed_female': 女性通过次数\
-    'score_average': 所有玩家录音均分  
-    'male_score_average': 男性均分  
+- response: dict{
+    'id', 'level_id', 'title', \
+    'played_num': 该关卡游戏总次数,
+    'unknown_num': 不确定性别者游戏次数,
+    'male_num': 男性游戏次数,  
+    'female_num': 女性游戏次数, \
+    'score_average': 所有玩家录音均分, 
+    'unknown_score_average': 不确定性别者均分,
+    'male_score_average': 男性均分,  
     'female_score_average': 女性均分 }
+##### 可视化
+###### 总体
+- 与列表url相同，所有可以用于画图的数据均在其中给出
+###### 单个关卡
+- url: api/manager/data/origin/<id>/chart (id为数据id)
+- method: GET
+- response: dict{
+    'id', 'level_id', 'title', \
+    'played_num', 'unknown_num', 'male_num', 'female_num', \
+    'score_average', 'unknown_score_average',
+    'male_score_average', 'female_score_average', \
+    'scores': list, 该关卡分数分布,
+    'unknown_scores': list, 该关卡不确定性别者分数分布,
+    'male_scores': list, 该关卡男性分数分布,
+    'female_scores': list, 该关卡女性分数分布 }\
+    注：各'scores’项分段均为0~10,11~20,...,91~100, 共10段
 #### 数据分析：用户数据
+##### 列表
 - url: api/manager/data/user
 - method: GET
 - request: 在url后加?param={}, 参数包括：\
-    sort: 排序规则，可选'level'  gender: 筛选性别，0为男，1为女\
+    sort: 排序规则，可选'level'    gender: 筛选性别，无0男1女2\
     分页: size和page，与"数据列表"中相同
-- response: dict{'user': 用户名, 'gender': 性别，男0女1, 'level': 用户游戏等级}
+- response: dict{'user': 用户名, 'gender': 性别，无0男1女2, 'level': 用户游戏等级}
+##### 可视化
+- url: api/manager/data/user/chart
+- method: GET
+- response: dict{
+     'num': 用户总数,
+     'unknown_num': 不确定性别用户数,
+     'male_num': 男性用户数,
+     'female_num': 女性用户数,\
+     'level_count': list, 各等级用户数，等级从0开始连续，代表用户已通过关卡数 }
 #### 数据分析：用户音频数据
+##### 列表
 - url: api/manager/data/user_audio
 - method: GET
 - request: 在url后加?param={}, 参数包括：\
-    level: 按关卡筛选  gender: 按性别筛选，男0女1\
+    level: 按关卡筛选    gender: 按性别筛选，无0男1女2\
     start_time,end_time: 按时间上下界筛选，值用YYYY-MM-DD表示\
     sort: 可取值'score','level','time'，分别表示按分数、关卡、时间排序
 - response: dict{'user':用户名,'level_id':关卡号,'timestamp':录制时间,'score':得分,'audio':用户录音音频url}
+##### 可视化
+##### 可视化
+- url: api/manager/data/user_audio/chart
+- method: GET
+- response: dict{
+    'num': 用户录音总数,
+    'unknown_num': 不确定性别用户录音数,
+    'male_num': 男性用户录音数,
+    'female_num': 女性用户录音数,\
+    'time_count': list, 存在新增录音的各天中新增录音数量，没有新增录音的日期被忽略 }
 
 ### 音视频数据：小程序客户端
 #### 单独返回音频接口
