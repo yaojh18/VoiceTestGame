@@ -1,7 +1,7 @@
 """
 Serializers for personnel.
 """
-# pylint: disable=E5142, W0223, W0221, R0201
+# pylint: disable=E5142, W0223, W0221, R0201, C0301
 import datetime
 import requests
 from django.contrib.auth import authenticate
@@ -84,7 +84,7 @@ def get_audio_score(speaker_id, audio):
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
         raise serializers.ValidationError(response['errmsg'])
-    return response['passed'], response['score']
+    return response['score']
 
 
 def get_user_token(user):
@@ -164,7 +164,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'password', 'email', 'name', 'password_confirm', 'token']
         extra_kwargs = {
-            'email': {'write_only': True},
+            'email': {'write_only': True, 'required': False},
             'password': {'write_only': True},
             'username': {'write_only': True, 'required': False}
         }
@@ -194,7 +194,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'password', 'email', 'name', 'password_old']
         extra_kwargs = {
-            'email': {'write_only': True},
+            'email': {'write_only': True, 'required': 'False'},
             'password': {'write_only': True},
             'username': {'write_only': True, 'required': False, 'validators': []}
         }
@@ -244,30 +244,29 @@ class UserAudioSerializer(serializers.ModelSerializer):
     Determine the format of user audio data when writing.
     """
     level_id = serializers.IntegerField(write_only=True)
-    passed = serializers.BooleanField(read_only=True)
+    type_id = serializers.CharField(write_only=True, default='0')
 
     class Meta:
         model = UserAudio
-        fields = ['level_id', 'passed', 'audio', 'score']
+        fields = ['level_id', 'audio', 'score', 'type_id']
         extra_kwargs = {
             'audio': {'write_only': True},
             'score': {'read_only': True}
         }
 
     def validate(self, attrs):
-        media = OriginMedia.objects.filter(level_id=attrs['level_id']).first()
+        media = OriginMedia.objects.filter(level_id=attrs['level_id'], type_id=attrs['type_id']).first()
         if media is None:
             raise serializers.ValidationError('Level id does not exist.')
         if media.speaker_id is None:
             media.speaker_id = get_speaker_id(media.id, media.audio_path)
-        attrs['passed'], attrs['score'] = get_audio_score(media.speaker_id, attrs['audio'])
+        attrs['score'] = get_audio_score(media.speaker_id, attrs['audio'])
         return attrs
 
     def create(self, validated_data):
         user = self.context['user']
-        media = OriginMedia.objects.get(level_id=validated_data.pop('level_id'))
+        media = OriginMedia.objects.get(level_id=validated_data['level_id'])
         user_audio = UserAudio(user=user, media=media, score=validated_data['score'])
-        user_audio.passed = validated_data['passed']
         user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name)
         user_audio.save()
         return user_audio
