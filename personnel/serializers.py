@@ -108,6 +108,7 @@ class UserLoginSerializer(serializers.Serializer):
         """
         Automatically generate token.
         """
+        print(obj)
         return get_user_token(obj)
 
     def validate(self, attrs):
