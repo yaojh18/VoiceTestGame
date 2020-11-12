@@ -189,7 +189,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         if 'level_id' in params:
             length = params.get('length', default=5)
             level_id = params.get('level_id')
-            type_id = params.get('type_id', default='0')
+            type_id = params.get('type_id', default=0)
             media_id = OriginMedia.objects.filter(level_id=level_id, type_id=type_id).first()
             if media_id is not None:
                 users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
@@ -206,7 +206,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         params = request.query_params
         if 'level_id' in params:
             level_id = params.get('level_id')
-            type_id = params.get('type_id', default='0')
+            type_id = params.get('type_id', default=0)
             media_id = OriginMedia.objects.filter(level_id=level_id, type_id=type_id).first()
             if media_id is not None:
                 user_id = params.get('user_id', default=user.id)

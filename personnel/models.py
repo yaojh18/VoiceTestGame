@@ -52,10 +52,10 @@ class UserProfile(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
     openid = models.CharField(max_length=128, unique=True)
-    gender = models.CharField(max_length=1, null=True, choices=(
-        ('0', 'Unknown'),
-        ('1', 'Male'),
-        ('2', 'Female')
+    gender = models.IntegerField(null=True, choices=(
+        (0, 'Unknown'),
+        (1, 'Male'),
+        (2, 'Female')
     ))
     city = models.CharField(max_length=128, null=True)
     province = models.CharField(max_length=128, null=True)

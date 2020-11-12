@@ -190,7 +190,7 @@ class WechatTest(TestCase):
         Test API for /api/wechat/profile/.
         """
         data = {
-            'gender': 'male',
+            'gender': 1,
             'nick_name': 'yao123',
             'city': 'beijing',
             'province': 'beijing',

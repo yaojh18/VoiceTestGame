@@ -13,8 +13,7 @@ from .models import OriginMedia
 from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
     MediaListSerializer, MediaSearchSerializer, MediaAnalysisSerializer, \
     UserAnalysisSerializer, UserAudioAnalysisSerializer, MediaChartSerializer, \
-    UserChartSerializer, UserAudioChartSerializer
-
+    UserChartSerializer, UserAudioChartSerializer, MediaResortSerializer
 DATA_LOAD_FAIL = 'Fail to find the data'
 
 
@@ -51,6 +50,8 @@ class ManagerViewSets(mixins.CreateModelMixin,
             return MediaListSerializer
         if self.action == 'create':
             return MediaCreateSerializer
+        if self.action == 'resort':
+            return MediaResortSerializer
         return MediaUpdateSerializer
 
     def list(self, request):
@@ -62,6 +63,13 @@ class ManagerViewSets(mixins.CreateModelMixin,
         queryset = paginator.paginate_queryset(queryset, request)
         serializer = self.get_serializer(queryset, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['POST'])
+    def resort(self, request):
+        res = self.get_serializer(data=request.data, many=True)
+        if res.is_valid():
+            return Response(res.data, status=status.HTTP_200_OK)
+        return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
 
 
 class ClientMediaViewSets(viewsets.GenericViewSet,
