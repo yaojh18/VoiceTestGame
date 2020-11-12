@@ -1,7 +1,7 @@
 """
 Serializers for media app
 """
-# pylint: disable=E5142, W0223, W0221, R0201\
+# pylint: disable=E5142, W0223, W0221, R0201, C0301
 from django.db.models import Max, Avg, Q, F
 from django.contrib.auth.models import User
 from rest_framework import serializers
@@ -64,7 +64,10 @@ class MediaListSerializer(serializers.ModelSerializer):
 
 
 class LevelListSerializer(serializers.ListSerializer):
-
+    """
+    Serializer for media level id resorting.
+    List Serializer.
+    """
     def validate(self, attrs):
         medias = list()
         level_ids = list()
@@ -94,9 +97,10 @@ class LevelListSerializer(serializers.ListSerializer):
         return obj_lst
 
 
-
 class MediaResortSerializer(serializers.ModelSerializer):
-
+    """
+    Serializer for media level id resorting.
+    """
     class Meta:
         model = OriginMedia
         fields = ['id', 'level_id']

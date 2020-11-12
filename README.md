@@ -3,34 +3,55 @@
 #### 添加
 - url: api/manager
 - method: POST
-- request: 数据内容: {level_id(关卡id，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
-- response: 成功/失败信息
-#### 删除
-- url: api/manager/<id> (<id>为数据id)
-- method: DELETE
+- request: 数据内容: {title(标题), content(文案), audio_path(音频文件), video_path(视频文件), type_id(视频类型，0无性别，1男，2女)}
 - response: 成功/失败信息
 #### 修改
 - url: api/manager/<id> (<id>为数据id)
 - method: PUT
-- request: dict{level_id(关卡id), title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)} \
-    注：所有项都可为空，若为空则后端不会修改该项
+- request: dict{title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件), type_id(视频类型)} \
+    注：所有项都均非必须，若不填则后端不会修改该项
 - response: 成功/失败信息
-#### 单条数据查询
-##### 根据数据id返回单条数据
+#### 单条数据查询(由id查询)
 - url: api/manager/<id> (<id>为数据id)
 - method: GET
-- response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
-##### 根据关卡id返回单条数据
-- url: api/manager?level_id=<level_id> (<level_id>为关卡id)
-- method: GET
-- response: 请求的关卡id对应的一条数据: list[dict{id, level_id, title, content, audio_path, video_path}] (list内只含一条数据)
+- response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)type_id(视频类型)}
 #### 数据列表
 - url: api/manager
 - method: GET
-- request: 在url后加?param={}进行查找, 参数之间使用&连接，参数包括：\
-    level: 关卡号      title: 标题（关键词包含查找）\
-    size: 分页，一页的数据条数，若没有此项则不进行分页    page: 页数，从1开始
-- response: list[dict{id, level_id, title}] (由dict组成的列表)
+- request: 在url后加?param={}进行查找, 参数之间使用&连接，参数包括：
+    + level_id: 关卡号   
+    + type_id: 类型号   
+    + title: 标题（关键词模糊查找）
+    + size: 分页，一页的数据条数，若没有此项默认一页20个
+    + page: 页数，从1开始
+- response:
+```
+{
+    "count": 3,                     #总页数
+    "next": null,                   #上一页链接
+    "previous": null,               #下一页链接
+    "results": [                    #字典列表
+        {
+            "id": 3,                #媒体id（可以通过这个来进一步查询详细的内容）
+            "level_id": 0,          #关卡id
+            "type_id": 2,           #类型id
+            "title": "大碗宽面"       #标题
+        },
+        {
+            "id": 1,
+            "level_id": 1,
+            "type_id": 2,
+            "title": "大碗宽面"
+        },
+        {
+            "id": 2,
+            "level_id": 2,
+            "type_id": 2,
+            "title": "大碗宽面"
+        }
+    ]
+}
+```
 #### 数据分析：音视频数据
 ##### 列表
 - url: api/manager/data/origin
@@ -122,10 +143,13 @@
 - method: GET
 - response: dict{'titles','score'} 每一项为一个列表
 
-# init
- 大概就是仿照monolithic-example做的，前端还是一片空白，表示我并不会加，同志们加油。
- 两个requirements和requirements_dev版本号并不是最终版，这里只是简单的拷贝了一下。
- pytest没有加，因为我不知道有什么用，欢迎大佬解答。
+###用户管理
+（未完待续）
+
+
+
+
+#工作日志部分，前端可以不用看。
 
 # 2020.9.25 孙宇涛
 添加了微信小程序前端文件夹WeApp，删除了default的frontend（如果管理平台直接继承的话我再把它pull回来）

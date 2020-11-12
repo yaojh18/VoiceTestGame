@@ -66,6 +66,9 @@ class ManagerViewSets(mixins.CreateModelMixin,
 
     @action(detail=False, methods=['POST'])
     def resort(self, request):
+        """
+        api for /api/manager/resort.
+        """
         res = self.get_serializer(data=request.data, many=True)
         if res.is_valid():
             res.save()
