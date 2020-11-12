@@ -1,7 +1,7 @@
 """
 Tests of media app
 """
-# pylint: disable=R0913, E5142
+# pylint: disable=R0913, E5142, C0301
 import os
 from django.test import TestCase
 from django.contrib.auth.models import Group, User
@@ -33,13 +33,7 @@ class ManagerTest(TestCase):
     """
 
     def setUp(self):
-        Group.objects.create(name='manager')
-        Group.objects.create(name='visitor')
-        self.client.post('/api/users/', data={
-            'username': 'test',
-            'password': '123456',
-            'password_confirm': '123456'
-        }, content_type='application/json')
+        User.objects.create_superuser(username='test', password='123456')
         self.client.login(username='test', password='123456')
 
     def search(self, level=None, name=None, page=None, size=None):
@@ -57,12 +51,12 @@ class ManagerTest(TestCase):
             url += 'size=' + str(size) + '&'
         return self.client.get(url, content_type='application/json')
 
-    def create(self, title, content, audio_path, video_path):
+    def create(self, type_id, title, content, audio_path, video_path):
         """
         create add request
         """
         data = {
-            'level_id': '',
+            'type_id': type_id,
             'title': title,
             'content': content,
             'audio_path': audio_path,
@@ -70,17 +64,14 @@ class ManagerTest(TestCase):
         }
         return self.client.post('/api/manager/', data=data)
 
-    def update(self, data_id, level_id, title, content, audio_path=None, video_path=None):
+    def update(self, data_id, title, content):
         """
         create edit request
         """
         self.client.login(username='test', password='123456')
         data = {
-            'level_id': level_id,
             'title': title,
             'content': content,
-            'audio_path': audio_path,
-            'video_path': video_path
         }
         return self.client.put('/api/manager/' + str(data_id) + '/',
                                data=data, content_type='application/json')
@@ -91,6 +82,7 @@ class ManagerTest(TestCase):
         """
         audio_file, video_file = create_file()
         response = self.create(title='test1', content='test 1',
+                               type_id=1,
                                audio_path=audio_file,
                                video_path=video_file)
         self.assertEqual(response.status_code, 201)
@@ -105,11 +97,12 @@ class ManagerTest(TestCase):
         """
         test edit method
         """
-        OriginMedia.objects.create(title='test2', content='test 2', level_id=0,
+        OriginMedia.objects.create(title='test2', content='test 2',
+                                   level_id=0, type_id='1',
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
         data_id = OriginMedia.objects.all()[0].id
-        response = self.update(data_id=data_id, title='test_edit', content='test edit', level_id=0)
+        response = self.update(data_id=data_id, title='test_edit', content='test edit')
         self.assertEqual(response.status_code, 200)
 
     def test_search(self):
@@ -147,24 +140,27 @@ class ClientMediaTest(TestCase):
         }, content_type='application/json')
         self.client.login(username='test', password='123456')
 
-    def video(self, level_id):
+    def video(self, level_id, type_id):
         """post for video"""
         data = {
-            'level_id': level_id
+            'level_id': level_id,
+            'type_id': type_id
         }
         return self.client.post('/api/media/video/', data=data, content_type='application/json')
 
-    def audio(self, level_id):
+    def audio(self, level_id, type_id):
         """post for audio"""
         data = {
-            'level_id': level_id
+            'level_id': level_id,
+            'type_id': type_id
         }
         return self.client.post('/api/media/audio/', data=data, content_type='application/json')
 
-    def material(self, level_id):
+    def material(self, level_id, type_id):
         """post for material"""
         data = {
-            'level_id': level_id
+            'level_id': level_id,
+            'type_id': type_id
         }
         return self.client.post('/api/media/material/', data=data, content_type='application/json')
 
@@ -172,31 +168,33 @@ class ClientMediaTest(TestCase):
         """
         tests for media APIs
         """
-        OriginMedia.objects.create(title='test3', content='test 3', level_id=0,
+        OriginMedia.objects.create(title='test3', content='test 3',
+                                   level_id=0, type_id='1',
                                    audio_path='/data/origin/audio/test3.wav',
                                    video_path='/data/origin/video/test3.mp4')
-        OriginMedia.objects.create(title='test4', content='test 4', level_id=1,
+        OriginMedia.objects.create(title='test4', content='test 4',
+                                   level_id=1, type_id='2',
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
-        response = self.video(level_id=1)
+        response = self.video(level_id=1, type_id=2)
         self.assertEqual(response.status_code, 200)
-        response = self.video(level_id=3)
+        response = self.video(level_id=3, type_id=2)
         self.assertEqual(response.status_code, 404)
-        response = self.video(level_id='hh')
+        response = self.video(level_id='hh', type_id=2)
         self.assertEqual(response.status_code, 400)
 
-        response = self.audio(level_id=0)
+        response = self.audio(level_id=0, type_id=1)
         self.assertEqual(response.status_code, 200)
-        response = self.audio(level_id=3)
+        response = self.audio(level_id=3, type_id=2)
         self.assertEqual(response.status_code, 404)
-        response = self.audio(level_id='hh')
+        response = self.audio(level_id='hh', type_id=2)
         self.assertEqual(response.status_code, 400)
 
-        response = self.material(level_id=0)
+        response = self.material(level_id=0, type_id=1)
         self.assertEqual(response.status_code, 200)
-        response = self.material(level_id=3)
+        response = self.material(level_id=3, type_id=2)
         self.assertEqual(response.status_code, 404)
-        response = self.material(level_id='hh')
+        response = self.material(level_id='hh', type_id=2)
         self.assertEqual(response.status_code, 400)
 
     def test_list(self):

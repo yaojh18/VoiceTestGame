@@ -3,66 +3,124 @@
 #### 添加
 - url: api/manager
 - method: POST
-- request: 数据内容: {level_id(关卡id，可为空), title(标题), content(文案), audio_path(音频文件), video_path(视频文件)}
-- response: 成功/失败信息
-#### 删除
-- url: api/manager/<id> (<id>为数据id)
-- method: DELETE
+- request: 数据内容: {title(标题), content(文案), audio_path(音频文件), video_path(视频文件), type_id(视频类型，0无性别，1男，2女)}
 - response: 成功/失败信息
 #### 修改
 - url: api/manager/<id> (<id>为数据id)
 - method: PUT
-- request: dict{level_id(关卡id), title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件)} \
-    注：所有项都可为空，若为空则后端不会修改该项
+- request: dict{title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件), type_id(视频类型)} \
+    注：所有项都均非必须，若不填则后端不会修改该项
 - response: 成功/失败信息
-#### 单条数据查询
-##### 根据数据id返回单条数据
+#### 单条数据查询(由id查询)
 - url: api/manager/<id> (<id>为数据id)
 - method: GET
-- response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)}
-##### 根据关卡id返回单条数据
-- url: api/manager?level_id=<level_id> (<level_id>为关卡id)
-- method: GET
-- response: 请求的关卡id对应的一条数据: list[dict{id, level_id, title, content, audio_path, video_path}] (list内只含一条数据)
+- response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)type_id(视频类型)}
 #### 数据列表
 - url: api/manager
 - method: GET
-- request: 在url后加?param={}进行查找, 参数包括：\
-    level: 关卡号  title: 标题（关键词包含查找）\
-    size: 分页，一页的数据条数，若没有此项则不进行分页  page: 页数，从1开始
-- response: list[dict{id, level_id, title}] (由dict组成的列表)
+- request: 在url后加?param={}进行查找, 参数之间使用&连接，参数包括：
+    + level_id: 关卡号   
+    + type_id: 类型号   
+    + title: 标题（关键词模糊查找）
+    + size: 分页，一页的数据条数，若没有此项默认一页20个
+    + page: 页数，从1开始
+- response:
+```
+{
+    "count": 3,                     #总页数
+    "next": null,                   #上一页链接
+    "previous": null,               #下一页链接
+    "results": [                    #字典列表
+        {
+            "id": 3,                #媒体id（可以通过这个来进一步查询详细的内容）
+            "level_id": 0,          #关卡id
+            "type_id": 2,           #类型id
+            "title": "大碗宽面"       #标题
+        },
+        {
+            "id": 1,
+            "level_id": 1,
+            "type_id": 2,
+            "title": "大碗宽面"
+        },
+        {
+            "id": 2,
+            "level_id": 2,
+            "type_id": 2,
+            "title": "大碗宽面"
+        }
+    ]
+}
+```
 #### 数据分析：音视频数据
+##### 列表
 - url: api/manager/data/origin
 - method: GET
 - request: 在url后加?param={}, 参数包括：\
     title: 按标题查找\
     分页: size和page，与"数据列表"中相同
-- response: dict{\
-    'played_num': 该关卡游戏总次数  
-    'passed_num': 该关卡通过次数  
-    'passed_proportion': 通过率\
-    'male_num': 男性游戏次数  
-    'female_num': 女性游戏次数  
-    'passed_male': 男性通过次数  
-    'passed_female': 女性通过次数\
-    'score_average': 所有玩家录音均分  
-    'male_score_average': 男性均分  
+- response: dict{
+    'id', 'level_id', 'title', \
+    'played_num': 该关卡游戏总次数,
+    'unknown_num': 不确定性别者游戏次数,
+    'male_num': 男性游戏次数,  
+    'female_num': 女性游戏次数, \
+    'score_average': 所有玩家录音均分, 
+    'unknown_score_average': 不确定性别者均分,
+    'male_score_average': 男性均分,  
     'female_score_average': 女性均分 }
+##### 可视化
+###### 总体
+- 与列表url相同，所有可以用于画图的数据均在其中给出
+###### 单个关卡
+- url: api/manager/data/origin/<id>/chart (id为数据id)
+- method: GET
+- response: dict{
+    'id', 'level_id', 'title', \
+    'played_num', 'unknown_num', 'male_num', 'female_num', \
+    'score_average', 'unknown_score_average',
+    'male_score_average', 'female_score_average', \
+    'scores': list, 该关卡分数分布,
+    'unknown_scores': list, 该关卡不确定性别者分数分布,
+    'male_scores': list, 该关卡男性分数分布,
+    'female_scores': list, 该关卡女性分数分布 }\
+    注：各'scores’项分段均为0~10,11~20,...,91~100, 共10段
 #### 数据分析：用户数据
+##### 列表
 - url: api/manager/data/user
 - method: GET
 - request: 在url后加?param={}, 参数包括：\
-    sort: 排序规则，可选'level'  gender: 筛选性别，0为男，1为女\
+    sort: 排序规则，可选'level'    gender: 筛选性别，无0男1女2\
     分页: size和page，与"数据列表"中相同
-- response: dict{'user': 用户名, 'gender': 性别，男0女1, 'level': 用户游戏等级}
+- response: dict{'user': 用户名, 'gender': 性别，无0男1女2, 'level': 用户游戏等级}
+##### 可视化
+- url: api/manager/data/user/chart
+- method: GET
+- response: dict{
+     'num': 用户总数,
+     'unknown_num': 不确定性别用户数,
+     'male_num': 男性用户数,
+     'female_num': 女性用户数,\
+     'level_count': list, 各等级用户数，等级从0开始连续，代表用户已通过关卡数 }
 #### 数据分析：用户音频数据
+##### 列表
 - url: api/manager/data/user_audio
 - method: GET
 - request: 在url后加?param={}, 参数包括：\
-    level: 按关卡筛选  gender: 按性别筛选，男0女1\
+    level: 按关卡筛选    gender: 按性别筛选，无0男1女2\
     start_time,end_time: 按时间上下界筛选，值用YYYY-MM-DD表示\
     sort: 可取值'score','level','time'，分别表示按分数、关卡、时间排序
 - response: dict{'user':用户名,'level_id':关卡号,'timestamp':录制时间,'score':得分,'audio':用户录音音频url}
+##### 可视化
+##### 可视化
+- url: api/manager/data/user_audio/chart
+- method: GET
+- response: dict{
+    'num': 用户录音总数,
+    'unknown_num': 不确定性别用户录音数,
+    'male_num': 男性用户录音数,
+    'female_num': 女性用户录音数,\
+    'time_count': list, 存在新增录音的各天中新增录音数量，没有新增录音的日期被忽略 }
 
 ### 音视频数据：小程序客户端
 #### 单独返回音频接口
@@ -85,10 +143,63 @@
 - method: GET
 - response: dict{'titles','score'} 每一项为一个列表
 
-# init
- 大概就是仿照monolithic-example做的，前端还是一片空白，表示我并不会加，同志们加油。
- 两个requirements和requirements_dev版本号并不是最终版，这里只是简单的拷贝了一下。
- pytest没有加，因为我不知道有什么用，欢迎大佬解答。
+### 用户管理
+#### 管理平台用户注册
+- url: api/users/
+- method: POST
+- request: username, password, password_confirm, email（可选）, name(可选)
+- response: token(请放在头部的Authorization中，格式为'JWT '+'token'，以访问之后的接口)
+#### 用户信息更改
+- url: api/users/
+- method: PUT
+- request: username, password(可选), password_old(修改密码时这一项为必须), email（可选）, name（可选）
+- response: id, username, password, email, name
+#### 用户信息获取
+- url: api/users/
+- method: GET
+- response: id, username, password, email, name(普通管理员获得自己的信息，超级管理员获得所有用户的信息)
+#### 用户登录
+- url: api/users/login/
+- method: POST
+- request: username, password
+- response: token
+
+### 微信小程序端
+#### 用户注册/登录
+- url: api/wechat/login/
+- method: POST
+- request: code(微信返回的session_id)
+- response: token(请放在头部的Authorization中，格式为'JWT '+'token'，以访问之后的接口)
+#### 用户获取个人信息
+- url: api/wechat/
+- method: GET
+- response: nick_name, avatar_url, gender, city, province, user_id(可用于访问之后的用户信息)
+#### 用户更改/录入个人信息
+- url: api/wechat/
+- method: POST
+- request: nick_name, avatar_url, gender, city, province(均为必须)
+- response: nick_name, avatar_url, gender, city, province, user_id(可用于访问之后的用户信息)
+#### 用户上传录音
+- url: api/wechat/audio/
+- method: POST
+- content-type: multipart/form-data
+- request: audio(音频)，level_id(关卡号)，type_id(性别)
+- response: score（分数）目前的分数上传还存在问题
+#### 获取某关卡的排行榜
+- url: api/level/
+- method: GET
+- params: level_id, type_id(默认为0), lengh(列表长度，默认为5)
+- response: 字典列表，每个字典包含nick_name、avatar_url、user_id（可用于后续查询）、score
+#### 获取某用户某关卡的最高分录音
+- url: api/level/audio/
+- method: GET
+- params: level_id, type_id(默认为0), user_id(默认为自己)
+- response: audio_url（音频URL）
+
+
+
+
+#工作日志部分，前端可以不用看。
 
 # 2020.9.25 孙宇涛
 添加了微信小程序前端文件夹WeApp，删除了default的frontend（如果管理平台直接继承的话我再把它pull回来）
