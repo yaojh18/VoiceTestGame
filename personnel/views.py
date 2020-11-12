@@ -158,6 +158,7 @@ class WechatViewSet(viewsets.GenericViewSet,
             #return Response({'msg': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
         res = self.get_serializer(data=login_response)
         if res.is_valid():
+            res.save()
             return Response(res.data, status=status.HTTP_200_OK)
         return Response({'msg': res.errors}, status=status.HTTP_400_BAD_REQUEST)
 
