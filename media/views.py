@@ -17,9 +17,38 @@ from .serializers import MediaCreateSerializer, MediaUpdateSerializer, \
 DATA_LOAD_FAIL = 'Fail to find the data'
 
 
+class ListModelMixin:
+    """
+    Create a model instance.
+    """
+    def list(self, request):
+        """
+        Mixin list method.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        paginator = PageNumberPagination()
+        queryset = paginator.paginate_queryset(queryset, request)
+        serializer = self.get_serializer(queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class ChatModelMixin:
+    """
+    Create a model instance.
+    """
+    @action(detail=False, methods=['GET'])
+    def chart(self, request):
+        """
+        Mixin chat method.
+        """
+        serializer = self.get_serializer(self.queryset)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class ManagerViewSets(mixins.CreateModelMixin,
                       mixins.RetrieveModelMixin,
                       mixins.UpdateModelMixin,
+                      ListModelMixin,
                       viewsets.GenericViewSet):
     """
     API on api/manager, media data access of for manager
@@ -53,16 +82,6 @@ class ManagerViewSets(mixins.CreateModelMixin,
         if self.action == 'resort':
             return MediaResortSerializer
         return MediaUpdateSerializer
-
-    def list(self, request):
-        """
-        Mixin list method.
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-        paginator = PageNumberPagination()
-        queryset = paginator.paginate_queryset(queryset, request)
-        serializer = self.get_serializer(queryset, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=['POST'])
     def resort(self, request):
@@ -189,11 +208,12 @@ class PageNumberPagination(pagination.PageNumberPagination):
     max_page_size = None
 
 
-class MediaDataViewSets(viewsets.GenericViewSet):
+class MediaDataViewSets(viewsets.GenericViewSet,
+                        ListModelMixin):
     """
     API on api/manager/data, data analysis for manager
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
     queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = MediaAnalysisSerializer
 
@@ -224,22 +244,14 @@ class MediaDataViewSets(viewsets.GenericViewSet):
         serializer = self.get_serializer(media)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def list(self, request):
-        """
-        Mixin list method.
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-        paginator = PageNumberPagination()
-        queryset = paginator.paginate_queryset(queryset, request)
-        serializer = self.get_serializer(queryset, many=True)
-        return paginator.get_paginated_response(serializer.data)
 
-
-class UserDataViewSets(viewsets.GenericViewSet):
+class UserDataViewSets(viewsets.GenericViewSet,
+                            ListModelMixin,
+                            ChatModelMixin):
     """
     API on api/manager/data/user, data analysis of user data for manager
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
     serializer_class = UserAnalysisSerializer
     queryset = UserProfile.objects.all()
 
@@ -261,30 +273,14 @@ class UserDataViewSets(viewsets.GenericViewSet):
             return UserChartSerializer
         return UserAnalysisSerializer
 
-    @action(detail=False, methods=['GET'])
-    def chart(self, request):
-        """
-        overall data for charts
-        """
-        serializer = self.get_serializer(self.queryset)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def list(self, request):
-        """
-        Mixin list method.
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-        paginator = PageNumberPagination()
-        queryset = paginator.paginate_queryset(queryset, request)
-        serializer = self.get_serializer(queryset, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-
-class UserAudioDataViewSets(viewsets.ModelViewSet):
+class UserAudioDataViewSets(viewsets.GenericViewSet,
+                            ListModelMixin,
+                            ChatModelMixin):
     """
     API on api/manager/data/user_audio, data analysis of user data for manager
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
     serializer_class = UserAudioAnalysisSerializer
     queryset = UserAudio.objects.all()
 
@@ -321,21 +317,3 @@ class UserAudioDataViewSets(viewsets.ModelViewSet):
         if self.action == 'chart':
             return UserAudioChartSerializer
         return UserAudioAnalysisSerializer
-
-    @action(detail=False, methods=['GET'])
-    def chart(self, request):
-        """
-        overall data for charts
-        """
-        serializer = self.get_serializer(self.queryset)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def list(self, request):
-        """
-        Mixin list method.
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-        paginator = PageNumberPagination()
-        queryset = paginator.paginate_queryset(queryset, request)
-        serializer = self.get_serializer(queryset, many=True)
-        return paginator.get_paginated_response(serializer.data)
