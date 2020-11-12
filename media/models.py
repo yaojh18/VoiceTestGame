@@ -24,6 +24,10 @@ class OriginMedia(models.Model):
     audio_path = models.FileField(max_length=256, upload_to='origin/audio/')
     video_path = models.FileField(max_length=256, upload_to='origin/video/')
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('level_id', 'type_id'), name='unique_level')
+        ]
 
     @property
     def generate_level_id(self):

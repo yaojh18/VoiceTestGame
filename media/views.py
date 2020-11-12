@@ -68,7 +68,8 @@ class ManagerViewSets(mixins.CreateModelMixin,
     def resort(self, request):
         res = self.get_serializer(data=request.data, many=True)
         if res.is_valid():
-            return Response(res.data, status=status.HTTP_200_OK)
+            res.save()
+            return Response(status=status.HTTP_200_OK)
         return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
 
 

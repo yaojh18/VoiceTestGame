@@ -2,7 +2,7 @@
 Serializers for media app
 """
 # pylint: disable=E5142, W0223, W0221, R0201\
-from django.db.models import Max, Avg, Q
+from django.db.models import Max, Avg, Q, F
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from personnel.models import UserAudio, UserProfile
@@ -41,6 +41,17 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
             'video_path': {'required': False, 'allow_null': True},
         }
 
+    def update(self, instance, validated_data):
+        if 'type_id' in validated_data:
+            type_id = validated_data.pop('type_id')
+            if type_id != instance.type_id:
+                medias = OriginMedia.objects.filter(type_id=instance.type_id, level_id__gt=instance.level_id)
+                medias.update(level_id=F('level_id') - 1)
+            instance.type_id = type_id
+            instance.level_id = instance.generate_level_id
+            instance.save()
+        return super().update(instance, validated_data)
+
 
 class MediaListSerializer(serializers.ModelSerializer):
     """
@@ -65,14 +76,17 @@ class LevelListSerializer(serializers.ListSerializer):
                 raise serializers.ValidationError
             medias.append(media)
             level_ids.append(item['level_id'])
+        type_id = medias[0].type_id
         for media in medias:
             if media.level_id not in level_ids:
                 raise serializers.ValidationError
+            if media.type_id != type_id:
+                raise serializers.ValidationError
         return attrs
 
-    def to_internal_value(self, data):
+    def create(self, validated_data):
         obj_lst = list()
-        for item in data:
+        for item in validated_data:
             media = OriginMedia.objects.get(id=item['id'])
             media.level_id = item['level_id']
             obj_lst.append(media)

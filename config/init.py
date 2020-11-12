@@ -12,25 +12,19 @@ from django.core.files import File
 def init_group_and_permission():
     user = ContentType.objects.get(model='user', app_label='auth')
 
-    add_media, created = Permission.objects.get_or_create(
-        content_type=user, codename='add_media', name="Can add new media")
-    update_media, created = Permission.objects.get_or_create(
-        content_type=user, codename='update_media', name='Can update existing media')
-    query_media, created = Permission.objects.get_or_create(
-        content_type=user, codename='query_media', name='Can query existing media')
+    management, created = Permission.objects.get_or_create(
+        content_type=user, codename='management', name="Can add new media")
     profile, created = Permission.objects.get_or_create(
         content_type=user, codename='profile', name='Have user profile')
     audio, created = Permission.objects.get_or_create(
         content_type=user, codename='audio', name='Have user audio')
 
     manager,created = Group.objects.get_or_create(name='manager')
-    manager.permissions.add(add_media)
-    manager.permissions.add(query_media)
-    manager.permissions.add(update_media)
+    manager.permissions.add(management)
+    manager.permissions.add()
     manager.save()
 
     visitor, created = Group.objects.get_or_create(name='visitor')
-    visitor.permissions.add(query_media)
     visitor.permissions.add(profile)
     visitor.permissions.add(audio)
     visitor.save()
