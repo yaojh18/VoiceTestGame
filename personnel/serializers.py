@@ -194,7 +194,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     nick_name = serializers.CharField(source='first_name')
     avatar_url = serializers.CharField(source='userprofile.avatar_url')
-    gender = serializers.CharField(source='userprofile.gender')
+    gender = serializers.IntegerField(source='userprofile.gender')
     city = serializers.CharField(source='userprofile.city')
     province = serializers.CharField(source='userprofile.province')
 
@@ -235,7 +235,7 @@ class UserAudioSerializer(serializers.ModelSerializer):
     Determine the format of user audio data when writing.
     """
     level_id = serializers.IntegerField(write_only=True)
-    type_id = serializers.CharField(write_only=True, default='0')
+    type_id = serializers.IntegerField(write_only=True, default=0)
 
     class Meta:
         model = UserAudio

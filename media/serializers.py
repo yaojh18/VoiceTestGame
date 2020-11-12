@@ -51,6 +51,47 @@ class MediaListSerializer(serializers.ModelSerializer):
         fields = ['id', 'level_id', 'title']
 
 
+class LevelListSerializer(serializers.ListSerializer):
+
+    def validate(self, attrs):
+        medias = list()
+        level_ids = list()
+        for item in attrs:
+            if 'id' not in item or 'level_id' not in item:
+                raise serializers.ValidationError
+            media = OriginMedia.objects.filter(id=item['id']).first()
+            if media is None:
+                raise serializers.ValidationError
+            medias.append(media)
+            level_ids.append(item['level_id'])
+        for media in medias:
+            if media.level_id not in level_ids:
+                raise serializers.ValidationError
+        return attrs
+
+    def to_internal_value(self, data):
+        obj_lst = list()
+        for item in data:
+            media = OriginMedia.objects.get(id=item['id'])
+            media.level_id = item['level_id']
+            obj_lst.append(media)
+        OriginMedia.objects.bulk_update(obj_lst, fields=['level_id'])
+        return obj_lst
+
+
+
+class MediaResortSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OriginMedia
+        fields = ['id', 'level_id']
+        extra_kwargs = {
+            'id': {'write_only': True, 'read_only': False},
+            'level_id': {'write_only': True}
+        }
+        list_serializer_class = LevelListSerializer
+
+
 class MediaSearchSerializer(serializers.Serializer):
     """
     serialize search requests

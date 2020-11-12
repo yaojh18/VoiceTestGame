@@ -14,20 +14,16 @@ class OriginMedia(models.Model):
     """
     level_id = models.IntegerField(db_index=True)
     speaker_id = models.CharField(max_length=64, null=True)
-    type_id = models.CharField(max_length=1, choices=(
-        ('0', 'Unknown'),
-        ('1', 'Male'),
-        ('2', 'Female')
-    ), default='0')
+    type_id = models.IntegerField(choices=(
+        (0, 'Unknown'),
+        (1, 'Male'),
+        (2, 'Female')
+    ), default=0)
     title = models.CharField(max_length=128)
     content = models.CharField(max_length=1024)  # 文案, 格式可能修改
     audio_path = models.FileField(max_length=256, upload_to='origin/audio/')
     video_path = models.FileField(max_length=256, upload_to='origin/video/')
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=('level_id', 'type_id'), name='unique_level')
-        ]
 
     @property
     def generate_level_id(self):
@@ -35,9 +31,10 @@ class OriginMedia(models.Model):
         Generate level id automatically.
         """
         media = OriginMedia.objects.filter(type_id=self.type_id)
-        if media is None:
-            return 0
-        return media.aggregate(max=models.Max('level_id'))['max'] + 1
+        max_level = media.aggregate(max=models.Max('level_id'))['max']
+        if max_level is not None:
+            return max_level + 1
+        return 0
 
 
 @receiver(pre_delete, sender=OriginMedia)
