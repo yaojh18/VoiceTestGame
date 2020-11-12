@@ -143,8 +143,58 @@
 - method: GET
 - response: dict{'titles','score'} 每一项为一个列表
 
-###用户管理
-（未完待续）
+### 用户管理
+#### 管理平台用户注册
+- url: api/users/
+- method: POST
+- request: username, password, password_confirm, email（可选）, name(可选)
+- response: token(请放在头部的Authorization中，格式为'JWT '+'token'，以访问之后的接口)
+#### 用户信息更改
+- url: api/users/
+- method: PUT
+- request: username, password(可选), password_old(修改密码时这一项为必须), email（可选）, name（可选）
+- response: id, username, password, email, name
+#### 用户信息获取
+- url: api/users/
+- method: GET
+- response: id, username, password, email, name(普通管理员获得自己的信息，超级管理员获得所有用户的信息)
+#### 用户登录
+- url: api/users/login/
+- method: POST
+- request: username, password
+- response: token
+
+### 微信小程序端
+#### 用户注册/登录
+- url: api/wechat/login/
+- method: POST
+- request: code(微信返回的session_id)
+- response: token(请放在头部的Authorization中，格式为'JWT '+'token'，以访问之后的接口)
+#### 用户获取个人信息
+- url: api/wechat/
+- method: GET
+- response: nick_name, avatar_url, gender, city, province, user_id(可用于访问之后的用户信息)
+#### 用户更改/录入个人信息
+- url: api/wechat/
+- method: POST
+- request: nick_name, avatar_url, gender, city, province(均为必须)
+- response: nick_name, avatar_url, gender, city, province, user_id(可用于访问之后的用户信息)
+#### 用户上传录音
+- url: api/wechat/audio/
+- method: POST
+- content-type: multipart/form-data
+- request: audio(音频)，level_id(关卡号)，type_id(性别)
+- response: score（分数）目前的分数上传还存在问题
+#### 获取某关卡的排行榜
+- url: api/level/
+- method: GET
+- params: level_id, type_id(默认为0), lengh(列表长度，默认为5)
+- response: 字典列表，每个字典包含nick_name、avatar_url、user_id（可用于后续查询）、score
+#### 获取某用户某关卡的最高分录音
+- url: api/level/audio/
+- method: GET
+- params: level_id, type_id(默认为0), user_id(默认为自己)
+- response: audio_url（音频URL）
 
 
 
