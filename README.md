@@ -11,11 +11,11 @@
 - request: dict{title(修改后数据的title标题), content(文案), audio_path(音频文件), video_path(视频文件), type_id(视频类型)} \
     注：所有项都均非必须，若不填则后端不会修改该项
 - response: 成功/失败信息
-#### 单条数据查询(由id查询)
+#### 单条数据详细信息获取(由id查询)
 - url: api/manager/<id> (<id>为数据id)
 - method: GET
 - response: 请求的id对应的一条数据: dict{id(数据id), level_id(关卡号), title(标题), content(文案), audio_path(音频文件url), video_path(视频文件url)type_id(视频类型)}
-#### 数据列表
+#### 数据查询
 - url: api/manager
 - method: GET
 - request: 在url后加?param={}进行查找, 参数之间使用&连接，参数包括：
@@ -52,6 +52,9 @@
     ]
 }
 ```
+#### 改变关卡顺序
+
+
 #### 数据分析：音视频数据
 ##### 列表
 - url: api/manager/data/origin

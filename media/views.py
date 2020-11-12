@@ -1,7 +1,7 @@
 """
 Views of media app
 """
-# pylint: disable=E5142, R0901, E1101, C0103, W0613
+# pylint: disable=E5142, R0901, E1101, C0103, W0613, R0903
 import datetime
 from django.db.models import Max
 from rest_framework import viewsets, status, pagination, mixins
