@@ -129,7 +129,7 @@ class WechatViewSet(viewsets.GenericViewSet,
     def get_permissions(self):
         if self.action == 'create':
             return [ProfilePermission()]
-        if self.action == 'list' or self.action == 'login':
+        if self.action == 'audio':
             return [IsAuthenticated()]
         return []
 

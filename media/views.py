@@ -280,7 +280,7 @@ class UserDataViewSets(viewsets.GenericViewSet):
         return paginator.get_paginated_response(serializer.data)
 
 
-class UserAudioDataViewSets(viewsets.ModelViewSet):
+class UserAudioDataViewSets(viewsets.GenericViewSet):
     """
     API on api/manager/data/user_audio, data analysis of user data for manager
     """
