@@ -256,7 +256,7 @@ class UserAudioSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['user']
-        media = OriginMedia.objects.get(level_id=validated_data['level_id'])
+        media = OriginMedia.objects.get(level_id=validated_data['level_id'], type_id=validated_data['type_id'])
         user_audio = UserAudio(user=user, media=media, score=validated_data['score'])
         user_audio.audio.save(content=validated_data['audio'], name=user_audio.get_audio_name)
         user_audio.save()
