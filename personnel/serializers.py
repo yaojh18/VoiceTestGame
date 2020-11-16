@@ -4,6 +4,7 @@ Serializers for personnel.
 # pylint: disable=E5142, W0223, W0221, R0201, C0301
 import datetime
 import requests
+import wave
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
