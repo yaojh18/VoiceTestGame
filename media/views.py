@@ -184,20 +184,20 @@ class ClientMediaViewSets(viewsets.GenericViewSet,
             return Response({'title': title, 'text': content}, status=status.HTTP_200_OK)
         return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # def list(self, request, *args, **kwargs):
-    #     response = super().list(request)
-    #     user_id = self.request.user
-    #     titles = []
-    #     scores = []
-    #     for item in response.data:
-    #         titles.append(item['title'])
-    #         user_audio = UserAudio.objects.filter(user=user_id, media=item['id'])
-    #         score = user_audio.aggregate(score=Max('score'))['score']
-    #         if score is None:
-    #             score = 0
-    #         scores.append(score)
-    #     response.data = {'titles': titles, 'score': scores}
-    #     return response
+    def list(self, request, *args, **kwargs):
+        response = super().list(request)
+        user_id = self.request.user
+        titles = []
+        scores = []
+        for item in response.data:
+            titles.append(item['title'])
+            user_audio = UserAudio.objects.filter(user=user_id, media=item['id'])
+            score = user_audio.aggregate(score=Max('score'))['score']
+            if score is None:
+                score = 0
+            scores.append(score)
+        response.data = {'titles': titles, 'score': scores}
+        return response
 
 
 class PageNumberPagination(pagination.PageNumberPagination):

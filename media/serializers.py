@@ -165,6 +165,8 @@ class UserAnalysisSerializer(serializers.ModelSerializer):
         data['level'] = user.audios.aggregate(level=Max('media__level_id'))['level']
         if data['level'] is None:
             data['level'] = 0
+        else:
+            data['level'] += 1
         return data
 
 
@@ -248,7 +250,7 @@ class UserChartSerializer(serializers.ModelSerializer):
         male = users.filter(gender='1')
         female = users.filter(gender='2')
         levels = []
-        level_num = OriginMedia.objects.all().count()
+        level_num = OriginMedia.objects.all().aggregate(level=Max('level_id'))['level']
         for _ in range(level_num+1):
             levels.append(0)
         for item in users:
