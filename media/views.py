@@ -81,6 +81,8 @@ class ManagerViewSets(mixins.CreateModelMixin,
             return MediaCreateSerializer
         if self.action == 'resort':
             return MediaResortSerializer
+        if self.action == 'update':
+            return MediaUpdateSerializer
         return MediaUpdateSerializer
 
     @action(detail=False, methods=['POST'])

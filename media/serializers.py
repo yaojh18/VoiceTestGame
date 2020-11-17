@@ -34,22 +34,24 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
         model = OriginMedia
         exclude = ['speaker_id', 'level_id']
         extra_kwargs = {
-            'type_id': {'required': False, 'allow_null': True},
-            'title': {'required': False, 'allow_null': True},
-            'content': {'required': False, 'allow_null': True},
-            'audio_path': {'required': False, 'allow_null': True},
-            'video_path': {'required': False, 'allow_null': True},
+            'type_id': {'required': False},
+            'title': {'required': False},
+            'content': {'required': False},
+            'audio_path': {'required': False},
+            'video_path': {'required': False},
         }
 
     def update(self, instance, validated_data):
         if 'type_id' in validated_data:
             type_id = validated_data.pop('type_id')
             if type_id != instance.type_id:
-                medias = OriginMedia.objects.filter(type_id=instance.type_id, level_id__gt=instance.level_id)
+                previous_type_id = instance.type_id
+                previous_level_id = instance.level_id
+                instance.type_id = type_id
+                instance.level_id = instance.generate_level_id
+                instance.save()
+                medias = OriginMedia.objects.filter(type_id=previous_type_id, level_id__gt=previous_level_id)
                 medias.update(level_id=F('level_id') - 1)
-            instance.type_id = type_id
-            instance.level_id = instance.generate_level_id
-            instance.save()
         return super().update(instance, validated_data)
 
 
