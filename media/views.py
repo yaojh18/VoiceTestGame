@@ -90,11 +90,12 @@ class ManagerViewSets(mixins.CreateModelMixin,
         """
         api for /api/manager/resort.
         """
+        print(request.data)
         res = self.get_serializer(data=request.data, many=True)
         if res.is_valid():
             res.save()
             return Response(status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
+        return Response(res.errors, status=status.HTTP_403_FORBIDDEN)
 
 
 class ClientMediaViewSets(viewsets.GenericViewSet,

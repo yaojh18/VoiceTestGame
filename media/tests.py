@@ -3,6 +3,7 @@ Tests of media app
 """
 # pylint: disable=R0913, E5142, C0301
 import os
+import json
 from datetime import datetime
 from django.test import TestCase
 from django.contrib.auth.models import Group, User
@@ -37,20 +38,22 @@ class ManagerTest(TestCase):
         User.objects.create_superuser(username='test', password='123456')
         self.client.login(username='test', password='123456')
 
-    def search(self, level=None, name=None, page=None, size=None):
+    def search(self, level_id=None, title=None, page=None, size=None, type_id=None):
         """
         create search request
         """
-        url = '/api/manager/?'
-        if level is not None:
-            url += 'level=' + str(level) + '&'
-        if name is not None:
-            url += 'title=' + name + '&'
+        data = dict()
+        if level_id is not None:
+            data['level_id'] = level_id
+        if type_id is not None:
+            data['type_id'] = type_id
+        if title is not None:
+            data['title'] = title
         if page is not None:
-            url += 'page_limit=' + str(page) + '&'
+            data['page'] = page
         if size is not None:
-            url += 'size=' + str(size) + '&'
-        return self.client.get(url, content_type='application/json')
+            data['size'] = size
+        return self.client.get('/api/manager/', data=data)
 
     def create(self, type_id, title, content, audio_path, video_path):
         """
@@ -63,9 +66,10 @@ class ManagerTest(TestCase):
             'audio_path': audio_path,
             'video_path': video_path
         }
-        return self.client.post('/api/manager/', data=data)
+        response = self.client.post('/api/manager/', data=data)
+        return response
 
-    def update(self, data_id, title, content):
+    def update(self, data_id, title, content, type_id):
         """
         create edit request
         """
@@ -73,9 +77,28 @@ class ManagerTest(TestCase):
         data = {
             'title': title,
             'content': content,
+            'type_id': type_id
         }
         return self.client.put('/api/manager/' + str(data_id) + '/',
                                data=data, content_type='application/json')
+
+    def create_list(self, id1, level_id1, id2, level_id2):
+        """
+        Create a resort list
+        """
+        data = [
+            {
+                'id': id1,
+                'level_id': level_id1
+            },
+            {
+                'id': id2,
+                'level_id': level_id2
+            }
+        ]
+        response = self.client.generic('POST', '/api/manager/resort/',
+                                       json.dumps(data), content_type='application/json')
+        return response
 
     def test_create(self):
         """
@@ -99,11 +122,11 @@ class ManagerTest(TestCase):
         test edit method
         """
         OriginMedia.objects.create(title='test2', content='test 2',
-                                   level_id=0, type_id='1',
+                                   level_id=0, type_id=1,
                                    audio_path='/data/origin/audio/test2.wav',
                                    video_path='/data/origin/video/test2.mp4')
         data_id = OriginMedia.objects.all()[0].id
-        response = self.update(data_id=data_id, title='test_edit', content='test edit')
+        response = self.update(data_id=data_id, title='test_edit', content='test edit', type_id=0)
         self.assertEqual(response.status_code, 200)
 
     def test_search(self):
@@ -118,12 +141,38 @@ class ManagerTest(TestCase):
                                    video_path='/data/origin/video/test4.mp4')
         response = self.search()
         self.assertEqual(response.status_code, 200)
-        response = self.search(level=0)
+        response = self.search(level_id=0)
         self.assertEqual(response.status_code, 200)
-        response = self.search(name='test')
+        response = self.search(type_id=0)
+        self.assertEqual(response.status_code, 200)
+        response = self.search(title='test')
         self.assertEqual(response.status_code, 200)
         response = self.search(size=2, page=1)
         self.assertEqual(response.status_code, 200)
+
+    def test_resort(self):
+        """
+        Test resort method.
+        """
+        media5 = OriginMedia.objects.create(title='test5', content='test 5', level_id=0,
+                                   audio_path='/data/origin/audio/test5.wav',
+                                   video_path='/data/origin/video/test5.mp4')
+        media6 = OriginMedia.objects.create(title='test6', content='test 6', level_id=0,
+                                            audio_path='/data/origin/audio/test6.wav',
+                                            video_path='/data/origin/video/test6.mp4')
+        media7 = OriginMedia.objects.create(title='test7', content='test 7', level_id=0, type_id=1,
+                                            audio_path='/data/origin/audio/test7.wav',
+                                            video_path='/data/origin/video/test7.mp4')
+        response = self.create_list(media5.id, media6.level_id, media6.id + 100, media5.level_id)
+        self.assertNotEqual(response.status_code, 200)
+        response = self.create_list(media5.id, media6.level_id + 1, media6.id, media5.level_id + 1)
+        self.assertNotEqual(response.status_code, 200)
+        response = self.create_list(media5.id, media6.level_id, media7.id, media7.level_id)
+        self.assertNotEqual(response.status_code, 200)
+        response = self.create_list(media5.id, media6.level_id, media6.id, media6.level_id)
+        self.assertEqual(response.status_code, 200)
+
+
 
 
 class ClientMediaTest(TestCase):

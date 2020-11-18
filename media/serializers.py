@@ -73,20 +73,29 @@ class LevelListSerializer(serializers.ListSerializer):
     def validate(self, attrs):
         medias = list()
         level_ids = list()
+        print(attrs)
         for item in attrs:
-            if 'id' not in item or 'level_id' not in item:
-                raise serializers.ValidationError('Please input id and level_id')
             media = OriginMedia.objects.filter(id=item['id']).first()
             if media is None:
-                raise serializers.ValidationError('Id does not exist.')
+                raise serializers.ValidationError({
+                    'detail': 'Id does not exist.'
+                })
             medias.append(media)
             level_ids.append(item['level_id'])
+        if len(medias) <= 1:
+            raise serializers.ValidationError({
+                    'detail': 'Please input at least 2 items.'
+                })
         type_id = medias[0].type_id
         for media in medias:
             if media.level_id not in level_ids:
-                raise serializers.ValidationError('Level ids are not consistent.')
+                raise serializers.ValidationError({
+                    'detail': 'Level ids are not consistent.'
+                })
             if media.type_id != type_id:
-                raise serializers.ValidationError('The media must belong to the same type.')
+                raise serializers.ValidationError({
+                    'detail': 'The media must belong to the same type.'
+                })
         return attrs
 
     def create(self, validated_data):
