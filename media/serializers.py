@@ -282,8 +282,9 @@ class UserAudioChartSerializer(serializers.ModelSerializer):
         male = audio.filter(user__userprofile__gender='1')
         female = audio.filter(user__userprofile__gender='2')
         time_count = dict()
+        time_format = '%Y-%m-%d'
         if not audio.count() == 0:
-            time_count[audio[0].timestamp.date().strftime('%Y-%m-%d')] = 1
+            time_count[audio[0].timestamp.date().strftime(time_format)] = 1
             last = 0
             for i in range(1, audio.count()):
                 if audio[i].timestamp.date() == audio[i - 1].timestamp.date():
@@ -293,9 +294,9 @@ class UserAudioChartSerializer(serializers.ModelSerializer):
             i = audio.count()
             if i > 1 and \
                     audio[i - 1].timestamp.date() == audio[i - 2].timestamp.date():
-                time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = i - last
+                time_count[audio[i - 1].timestamp.date().strftime(time_format)] = i - last
             else:
-                time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = 1
+                time_count[audio[i - 1].timestamp.date().strftime(time_format)] = 1
         data = dict()
         data['num'] = audio.count()
         data['unknown_num'] = unknown.count()

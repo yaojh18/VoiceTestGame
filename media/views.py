@@ -137,7 +137,7 @@ class ClientMediaViewSets(viewsets.GenericViewSet,
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id, type_id=type_id)
             except OriginMedia.DoesNotExist:
-                return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
+                return Response({'detail': DATA_LOAD_FAIL}, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
             video_path = media_serializer.data['video_path']
             url = video_path
@@ -157,7 +157,7 @@ class ClientMediaViewSets(viewsets.GenericViewSet,
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id, type_id=type_id)
             except OriginMedia.DoesNotExist:
-                return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
+                return Response({'detail': DATA_LOAD_FAIL}, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
             audio_path = media_serializer.data['audio_path']
             url = audio_path
@@ -177,7 +177,7 @@ class ClientMediaViewSets(viewsets.GenericViewSet,
             try:
                 media_data = OriginMedia.objects.get(level_id=data_id, type_id=type_id)
             except OriginMedia.DoesNotExist:
-                return Response(DATA_LOAD_FAIL, status=status.HTTP_404_NOT_FOUND)
+                return Response({'detail': DATA_LOAD_FAIL}, status=status.HTTP_404_NOT_FOUND)
             media_serializer = MediaCreateSerializer(media_data)
             title = media_serializer.data['title']
             content = media_serializer.data['content']
@@ -255,13 +255,13 @@ class UserDataViewSets(viewsets.GenericViewSet,
     """
     permission_classes = [IsAuthenticated, ManagePermission]
     serializer_class = UserAnalysisSerializer
-    queryset = UserProfile.objects.all()
+    queryset = UserProfile.objects.all().filter(user__groups__name='visitor')
 
     def get_queryset(self):
         """
         get queryset
         """
-        queryset = UserProfile.objects.all().order_by('pk')
+        queryset = UserProfile.objects.all().order_by('pk').filter(user__groups__name='visitor')
         gender = self.request.query_params.get('gender', None)
         if gender is not None:
             queryset = queryset.filter(gender=gender)
