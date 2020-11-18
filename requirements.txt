@@ -3,4 +3,3 @@ pymysql==0.10.1
 djangorestframework==3.12.2
 requests==2.25.0
 djangorestframework-jwt==1.11.0
-wave==0.0.2

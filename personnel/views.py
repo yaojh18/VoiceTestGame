@@ -48,9 +48,7 @@ class ListModelMixin:
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class UserViewSet(viewsets.GenericViewSet,
-                  mixins.CreateModelMixin,
-                  ListModelMixin):
+class UserViewSet(viewsets.GenericViewSet, ListModelMixin):
     """
     Define API under api/user/ .
     """
@@ -77,6 +75,16 @@ class UserViewSet(viewsets.GenericViewSet,
             return [IsAuthenticated(),]
         return []
 
+    def create(self, request):
+        """
+        API for /api/wechat/profile.
+        """
+        res = self.get_serializer(data=request.data)
+        if res.is_valid():
+            res.save()
+            return Response(res.data, status=status.HTTP_200_OK)
+        return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def put(self, request):
         """
         API for api/user/registration
@@ -87,7 +95,7 @@ class UserViewSet(viewsets.GenericViewSet,
         if res.is_valid():
             res.save()
             return Response(res.data, status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
     def login(self, request):
@@ -97,11 +105,10 @@ class UserViewSet(viewsets.GenericViewSet,
         res = self.get_serializer(data=request.data)
         if res.is_valid():
             return Response(res.data, status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_403_FORBIDDEN)
+        return Response(res.errors, status=status.HTTP_403_FORBIDDEN)
 
 
-class WechatViewSet(viewsets.GenericViewSet,
-                    ListModelMixin):
+class WechatViewSet(viewsets.GenericViewSet, ListModelMixin):
     """
     Define API for /api/wechat/.
     """
@@ -128,9 +135,9 @@ class WechatViewSet(viewsets.GenericViewSet,
 
     def get_permissions(self):
         if self.action == 'create':
-            return [ProfilePermission()]
+            return [IsAuthenticated(), ProfilePermission()]
         if self.action == 'audio':
-            return [IsAuthenticated()]
+            return [IsAuthenticated(), AudioPermission()]
         return []
 
     def create(self, request):
@@ -142,7 +149,7 @@ class WechatViewSet(viewsets.GenericViewSet,
         if res.is_valid():
             res.save()
             return Response(res.data, status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
     def login(self, request):
@@ -152,16 +159,16 @@ class WechatViewSet(viewsets.GenericViewSet,
         if 'code' in request.data:
             login_response = get_wechat_credential(request.data['code'])
         else:
-            return Response({'msg': 'Please provide session_id'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Please provide session_id'}, status=status.HTTP_400_BAD_REQUEST)
         if 'errcode' in login_response:
-            return Response({'msg': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Wrong session_id'}, status=status.HTTP_404_NOT_FOUND)
         res = self.get_serializer(data=login_response)
         if res.is_valid():
             res.save()
             return Response(res.data, status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, AudioPermission])
+    @action(detail=False, methods=['POST'])
     def audio(self, request):
         """
         API for /api/wechat/audio.
@@ -171,7 +178,7 @@ class WechatViewSet(viewsets.GenericViewSet,
         if res.is_valid():
             res.save()
             return Response(res.data, status=status.HTTP_200_OK)
-        return Response({'msg': res.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -216,4 +223,4 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
                     return Response({
                         'audio_url': request.build_absolute_uri(user_audio.audio.url)},
                         status=status.HTTP_200_OK)
-        return Response({'msg': 'Please input the correct level_id'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'detail': 'the audio you are looking for doesn\'t exits'}, status=status.HTTP_404_NOT_FOUND)

@@ -4,11 +4,10 @@ Serializers for personnel.
 # pylint: disable=E5142, W0223, W0221, R0201, C0301
 import datetime
 import requests
-import wave
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.hashers import make_password
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 from rest_framework_jwt.settings import api_settings
 from media.models import OriginMedia
 from config.local_settings import APP_URL, APP_ID, APP_SECRET
@@ -18,7 +17,6 @@ from .models import UserProfile, UserAudio
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_response_payload_handler = api_settings.JWT_RESPONSE_PAYLOAD_HANDLER
-
 
 def get_speaker_id(audio_id, audio_path):
     """
@@ -31,7 +29,12 @@ def get_speaker_id(audio_id, audio_path):
         "secret": APP_SECRET
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise serializers.ValidationError(response['errmsg'])
+        raise serializers.ValidationError({
+            'detail':{
+                'errcode': response['errcode'],
+                'errmsg': response['errmsg']
+            }
+        })
     speaker_id = response['speakerId']
     response = requests.post(APP_URL + '/interface/text/training/get', json={
         'speaker_id': speaker_id,
@@ -40,7 +43,12 @@ def get_speaker_id(audio_id, audio_path):
         'secret': APP_SECRET
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise serializers.ValidationError(response['errmsg'])
+        raise serializers.ValidationError({
+            'detail': {
+                'errcode': response['errcode'],
+                'errmsg': response['errmsg']
+            }
+        })
     session_id = response['session_id']
     response = requests.post(APP_URL + '/interface/voice/training/upload', files={
         'audio': ('audio', audio_path.open('rb'), 'audio/x-wav'),
@@ -52,12 +60,22 @@ def get_speaker_id(audio_id, audio_path):
         }))
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise serializers.ValidationError(response['errmsg'])
+        raise serializers.ValidationError({
+            'detail': {
+                'errcode': response['errcode'],
+                'errmsg': response['errmsg']
+            }
+        })
     response = requests.post(APP_URL + '/interface/voiceprint/training/create', json={
             'session_id': session_id
         }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise serializers.ValidationError(response['errmsg'])
+        raise serializers.ValidationError({
+            'detail': {
+                'errcode': response['errcode'],
+                'errmsg': response['errmsg']
+            }
+        })
     return speaker_id
 
 
@@ -73,10 +91,17 @@ def get_audio_score(speaker_id, audio):
         'secret': APP_SECRET
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise serializers.ValidationError(response['errmsg'])
+        raise serializers.ValidationError({
+            'detail': {
+                'errcode': response['errcode'],
+                'errmsg': response['errmsg']
+            }
+        })
     session_id = response['session_id']
+    # audio.seek(0)
+    # audio.read(44)
     response = requests.post(APP_URL + '/interface/verification/score', files={
-        'audio': ('audio', audio.open('rb'), 'audio/x-wav'),
+        'audio': ('audio', audio, 'audio/x-wav'),
         'json': (None, str({
             'session_id': session_id,
             'bm_bits': 2,
@@ -84,7 +109,12 @@ def get_audio_score(speaker_id, audio):
         }))
     }).json()
     if 'errcode' in response and response['errcode'] != 0:
-        raise serializers.ValidationError(response['errmsg'])
+        raise serializers.ValidationError({
+            'detail': {
+                'errcode': response['errcode'],
+                'errmsg': response['errmsg']
+            }
+        })
     return response['score']
 
 
@@ -114,7 +144,9 @@ class UserLoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = authenticate(username=attrs['username'], password=attrs['password'])
         if not user:
-            raise serializers.ValidationError('Please input the correct username and password.')
+            raise serializers.ValidationError({
+                'detail': 'Please input the correct username and password.'
+            })
         self.instance = User.objects.get(username=attrs['username'])
         self.instance.last_login = datetime.datetime.now()
         self.instance.save()
@@ -141,14 +173,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'email': {'write_only': True, 'required': False},
             'password': {'write_only': True},
-            'username': {'write_only': True, 'required': True}
+            'username': {'write_only': True, 'required': True, "error_messages": {"required": "Give yourself a username"}}
         }
 
     def validate(self, attrs):
         password = attrs['password']
         password_confirm = attrs.pop('password_confirm')
         if password != password_confirm:
-            raise serializers.ValidationError('The passwords are not consistent.')
+            raise exceptions.ValidationError({
+                'detail': 'Two passwords aren\'t consistent'
+            })
         return attrs
 
     def create(self, validated_data):
@@ -177,13 +211,19 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         user = User.objects.filter(username=attrs['username']).first()
         if user is None:
-            raise serializers.ValidationError('Please input the correct username.')
+            raise serializers.ValidationError({
+                'detail': 'Please input the correct username.'
+            })
         if 'password' in attrs:
             if 'password_old' not in attrs:
-                raise serializers.ValidationError('Please input the old password.')
+                raise serializers.ValidationError({
+                    'detail': 'Please input the old password.'
+                })
             password_old = attrs.pop('password_old')
             if not user.check_password(password_old):
-                raise serializers.ValidationError('Please input the correct password.')
+                raise serializers.ValidationError({
+                    'detail': 'Please input the correct password.'
+                })
             attrs['password'] = make_password(attrs['password'])
         self.instance = user
         return attrs
@@ -249,9 +289,12 @@ class UserAudioSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         media = OriginMedia.objects.filter(level_id=attrs['level_id'], type_id=attrs['type_id']).first()
         if media is None:
-            raise serializers.ValidationError('Level id does not exist.')
+            raise serializers.ValidationError({
+                'detail': 'Level id does not exist.'
+            })
         if media.speaker_id is None:
             media.speaker_id = get_speaker_id(media.id, media.audio_path)
+            media.save()
         attrs['score'] = get_audio_score(media.speaker_id, attrs['audio'])
         return attrs
 
