@@ -251,7 +251,7 @@ class UserChartSerializer(serializers.ModelSerializer):
         female = users.filter(gender='2')
         levels = []
         level_num = OriginMedia.objects.all().aggregate(level=Max('level_id'))['level']
-        for _ in range(level_num+1):
+        for _ in range(level_num+2):
             levels.append(0)
         for item in users:
             index = item.user.audios.aggregate(level=Max('media__level_id'))['level']
@@ -291,7 +291,6 @@ class UserAudioChartSerializer(serializers.ModelSerializer):
                 time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = i - last
                 last = i
             i = audio.count()
-            print(time_count)
             if i > 1 and \
                     audio[i - 1].timestamp.date() == audio[i - 2].timestamp.date():
                 time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = i - last

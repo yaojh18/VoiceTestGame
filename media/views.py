@@ -215,7 +215,7 @@ class MediaDataViewSets(viewsets.GenericViewSet,
     """
     API on api/manager/data, data analysis for manager
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
     queryset = OriginMedia.objects.all().order_by('level_id')
     serializer_class = MediaAnalysisSerializer
 
@@ -253,7 +253,7 @@ class UserDataViewSets(viewsets.GenericViewSet,
     """
     API on api/manager/data/user, data analysis of user data for manager
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
     serializer_class = UserAnalysisSerializer
     queryset = UserProfile.objects.all()
 
@@ -282,7 +282,7 @@ class UserAudioDataViewSets(viewsets.GenericViewSet,
     """
     API on api/manager/data/user_audio, data analysis of user data for manager
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, ManagePermission]
     serializer_class = UserAudioAnalysisSerializer
     queryset = UserAudio.objects.all()
 
