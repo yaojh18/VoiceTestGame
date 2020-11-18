@@ -196,10 +196,10 @@ class WechatTest(TestCase):
             'province': 'beijing',
         }
         response = self.client.post('/api/wechat/', data=data)
-        self.assertNotEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 201)
         data['avatar_url'] = 'https://baidu.com/'
         response = self.client.post('/api/wechat/', data=data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_audio(self):
         """
