@@ -206,9 +206,9 @@ class WechatTest(TestCase):
         Test API for /api/wechat/audio/.
         """
         response = self.insert_user_audio(level_id=1)
-        self.assertNotEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 201)
         response = self.insert_user_audio()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_level(self):
         """
