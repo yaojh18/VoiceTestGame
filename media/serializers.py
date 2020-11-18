@@ -187,6 +187,8 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
         data['user'] = User.objects.get(pk=instance.user.id).username
         level = OriginMedia.objects.get(id=instance.media.id).level_id
         data['level_id'] = level
+        type_id = OriginMedia.objects.get(id=instance.media.ud).type_id
+        data['type_id'] = type_id
         return data
 
 
