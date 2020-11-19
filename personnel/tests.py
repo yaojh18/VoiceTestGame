@@ -69,9 +69,9 @@ class LogTest(TestCase):
         """
         Login method for wechat.
         """
-        data = {
-            "code": session_id
-        }
+        data = dict()
+        if session_id is not None:
+            data['session_id'] = session_id
         return self.client.post('/api/wechat/login/', data=data)
 
     def test_registration(self):
@@ -101,13 +101,20 @@ class LogTest(TestCase):
         """
         response = self.login_for_wechat('123456')
         self.assertNotEqual(response.status_code, 200)
+        response = self.login_for_wechat()
+        self.assertNotEqual(response.status_code, 200)
 
     def test_viewset(self):
         """
         Test if viewset works properly.
         """
-        self.login(username='admin',password='123456')
+        self.registration(username='admin',password='123456', password2='123456')
         self.client.login(username='admin', password='123456')
+        self.client.get('/api/users/')
+        self.client.get('/api/wechat/')
+        self.client.logout()
+        User.objects.create_superuser(username='admin10', password='123456')
+        self.client.login(username='admin10', password='123456')
         self.client.get('/api/users/')
         self.client.get('/api/wechat/')
 
@@ -115,15 +122,22 @@ class LogTest(TestCase):
         """
         Test to update user data.
         """
-        self.registration('test3','123456','123456')
+        self.registration('test3', '123456', '123456')
         self.client.login(username='test3', password='123456')
         data = {
             'username': 'test3',
             'password': '1234567',
-            'password_old': '123456',
             'name': 'yaojh',
             'email': 'yaojh18@mails.tsinghua.edu.cn'
         }
+        response = self.client.put('/api/users/login/', data=data, content_type='application/json')
+        self.assertNotEqual(response.status_code, 200)
+        response = self.client.put('/api/users/', data=data, content_type='application/json')
+        self.assertNotEqual(response.status_code, 200)
+        data['password_old'] = '1234567'
+        response = self.client.put('/api/users/', data=data, content_type='application/json')
+        self.assertNotEqual(response.status_code, 200)
+        data['password_old'] = '123456'
         response = self.client.put('/api/users/', data=data, content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
@@ -170,7 +184,6 @@ class WechatTest(TestCase):
         media.save()
         video.close()
         audio.close()
-        self.client.login(username='admin', password='123456')
 
     def insert_user_audio(self, level_id=0):
         """
@@ -189,6 +202,7 @@ class WechatTest(TestCase):
         """
         Test API for /api/wechat/profile/.
         """
+        self.client.login(username='admin', password='123456')
         data = {
             'gender': 1,
             'nick_name': 'yao123',
@@ -196,19 +210,25 @@ class WechatTest(TestCase):
             'province': 'beijing',
         }
         response = self.client.post('/api/wechat/', data=data)
-        self.assertNotEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 201)
         data['avatar_url'] = 'https://baidu.com/'
         response = self.client.post('/api/wechat/', data=data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_audio(self):
         """
         Test API for /api/wechat/audio/.
         """
+        User.objects.create_user(username='test', password='123456')
+        self.client.login(username='test', password='123456')
         response = self.insert_user_audio(level_id=1)
-        self.assertNotEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 201)
+        self.client.logout()
+        self.client.login(username='admin', password='123456')
+        response = self.insert_user_audio(level_id=1)
+        self.assertNotEqual(response.status_code, 201)
         response = self.insert_user_audio()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_level(self):
         """
@@ -219,12 +239,16 @@ class WechatTest(TestCase):
             'level_id': 0
         }
         response = self.client.get('/api/level/', data=data)
+        self.assertNotEqual(response.status_code, 200)
+        self.client.login(username='admin', password='123456')
+        response = self.client.get('/api/level/', data=data)
         self.assertEqual(response.status_code, 200)
 
     def test_level_audio(self):
         """
         Test API for /api/level/audio/.
         """
+        self.client.login(username='admin', password='123456')
         self.insert_user_audio()
         data = {
             'level_id': 0

@@ -34,22 +34,24 @@ class MediaUpdateSerializer(serializers.ModelSerializer):
         model = OriginMedia
         exclude = ['speaker_id', 'level_id']
         extra_kwargs = {
-            'type_id': {'required': False, 'allow_null': True},
-            'title': {'required': False, 'allow_null': True},
-            'content': {'required': False, 'allow_null': True},
-            'audio_path': {'required': False, 'allow_null': True},
-            'video_path': {'required': False, 'allow_null': True},
+            'type_id': {'required': False},
+            'title': {'required': False},
+            'content': {'required': False},
+            'audio_path': {'required': False},
+            'video_path': {'required': False},
         }
 
     def update(self, instance, validated_data):
         if 'type_id' in validated_data:
             type_id = validated_data.pop('type_id')
             if type_id != instance.type_id:
-                medias = OriginMedia.objects.filter(type_id=instance.type_id, level_id__gt=instance.level_id)
+                previous_type_id = instance.type_id
+                previous_level_id = instance.level_id
+                instance.type_id = type_id
+                instance.level_id = instance.generate_level_id
+                instance.save()
+                medias = OriginMedia.objects.filter(type_id=previous_type_id, level_id__gt=previous_level_id)
                 medias.update(level_id=F('level_id') - 1)
-            instance.type_id = type_id
-            instance.level_id = instance.generate_level_id
-            instance.save()
         return super().update(instance, validated_data)
 
 
@@ -71,20 +73,29 @@ class LevelListSerializer(serializers.ListSerializer):
     def validate(self, attrs):
         medias = list()
         level_ids = list()
+        print(attrs)
         for item in attrs:
-            if 'id' not in item or 'level_id' not in item:
-                raise serializers.ValidationError
             media = OriginMedia.objects.filter(id=item['id']).first()
             if media is None:
-                raise serializers.ValidationError
+                raise serializers.ValidationError({
+                    'detail': 'Id does not exist.'
+                })
             medias.append(media)
             level_ids.append(item['level_id'])
+        if len(medias) <= 1:
+            raise serializers.ValidationError({
+                    'detail': 'Please input at least 2 items.'
+                })
         type_id = medias[0].type_id
         for media in medias:
             if media.level_id not in level_ids:
-                raise serializers.ValidationError
+                raise serializers.ValidationError({
+                    'detail': 'Level ids are not consistent.'
+                })
             if media.type_id != type_id:
-                raise serializers.ValidationError
+                raise serializers.ValidationError({
+                    'detail': 'The media must belong to the same type.'
+                })
         return attrs
 
     def create(self, validated_data):
@@ -163,6 +174,8 @@ class UserAnalysisSerializer(serializers.ModelSerializer):
         data['level'] = user.audios.aggregate(level=Max('media__level_id'))['level']
         if data['level'] is None:
             data['level'] = 0
+        else:
+            data['level'] += 1
         return data
 
 
@@ -183,6 +196,8 @@ class UserAudioAnalysisSerializer(serializers.ModelSerializer):
         data['user'] = User.objects.get(pk=instance.user.id).username
         level = OriginMedia.objects.get(id=instance.media.id).level_id
         data['level_id'] = level
+        type_id = OriginMedia.objects.get(id=instance.media.id).type_id
+        data['type_id'] = type_id
         return data
 
 
@@ -246,8 +261,8 @@ class UserChartSerializer(serializers.ModelSerializer):
         male = users.filter(gender='1')
         female = users.filter(gender='2')
         levels = []
-        level_num = OriginMedia.objects.all().count()
-        for _ in range(level_num+1):
+        level_num = OriginMedia.objects.all().aggregate(level=Max('level_id'))['level']
+        for _ in range(level_num+2):
             levels.append(0)
         for item in users:
             index = item.user.audios.aggregate(level=Max('media__level_id'))['level']
@@ -278,19 +293,21 @@ class UserAudioChartSerializer(serializers.ModelSerializer):
         male = audio.filter(user__userprofile__gender='1')
         female = audio.filter(user__userprofile__gender='2')
         time_count = dict()
-        time_count[audio[0].timestamp.date().strftime('%Y-%m-%d')] = 1
-        last = 0
-        for i in range(1, audio.count()):
-            if audio[i].timestamp.date() == audio[i - 1].timestamp.date():
-                continue
-            time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = i - last
-            last = i
-        i = audio.count()
-        if i > 1 and \
-                audio[i - 1].timestamp.date() == audio[i - 2].timestamp.date():
-            time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] += 1
-        else:
-            time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = 1
+        time_format = '%Y-%m-%d'
+        if not audio.count() == 0:
+            time_count[audio[0].timestamp.date().strftime(time_format)] = 1
+            last = 0
+            for i in range(1, audio.count()):
+                if audio[i].timestamp.date() == audio[i - 1].timestamp.date():
+                    continue
+                time_count[audio[i - 1].timestamp.date().strftime('%Y-%m-%d')] = i - last
+                last = i
+            i = audio.count()
+            if i > 1 and \
+                    audio[i - 1].timestamp.date() == audio[i - 2].timestamp.date():
+                time_count[audio[i - 1].timestamp.date().strftime(time_format)] = i - last
+            else:
+                time_count[audio[i - 1].timestamp.date().strftime(time_format)] = 1
         data = dict()
         data['num'] = audio.count()
         data['unknown_num'] = unknown.count()
