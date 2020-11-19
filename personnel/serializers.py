@@ -98,8 +98,6 @@ def get_audio_score(speaker_id, audio):
             }
         })
     session_id = response['session_id']
-    # audio.seek(0)
-    # audio.read(44)
     response = requests.post(APP_URL + '/interface/verification/score', files={
         'audio': ('audio', audio, 'audio/x-wav'),
         'json': (None, str({
