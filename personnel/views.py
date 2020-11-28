@@ -82,7 +82,7 @@ class UserViewSet(viewsets.GenericViewSet, ListModelMixin):
         res = self.get_serializer(data=request.data)
         if res.is_valid():
             res.save()
-            return Response(res.data, status=status.HTTP_200_OK)
+            return Response(res.data, status=status.HTTP_201_CREATED)
         return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
@@ -148,7 +148,7 @@ class WechatViewSet(viewsets.GenericViewSet, ListModelMixin):
         res = self.get_serializer(instance=user, data=request.data)
         if res.is_valid():
             res.save()
-            return Response(res.data, status=status.HTTP_200_OK)
+            return Response(res.data, status=status.HTTP_201_CREATED)
         return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
@@ -177,7 +177,7 @@ class WechatViewSet(viewsets.GenericViewSet, ListModelMixin):
         res = self.get_serializer(data=request.data, context={'user': user})
         if res.is_valid():
             res.save()
-            return Response(res.data, status=status.HTTP_200_OK)
+            return Response(res.data, status=status.HTTP_201_CREATED)
         return Response(res.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -202,7 +202,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             if media_id is not None:
                 users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
                 if users is not None:
-                    return users.order_by('score')[:length]
+                    return users.order_by('-score')[:length]
         return User.objects.none()
 
     @action(detail=False, methods=['GET'])
