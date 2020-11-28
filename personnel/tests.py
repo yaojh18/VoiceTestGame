@@ -79,11 +79,11 @@ class LogTest(TestCase):
         Try to create test account.
         """
         response = self.registration('test', '123456', '123456')
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         response = self.registration('test1', '123456', '1234567')
         self.assertNotEqual(response.status_code, 201)
         response = self.registration('test1', '123456', '123456', 'yao123')
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
 
     def test_login(self):
         """

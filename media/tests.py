@@ -4,6 +4,7 @@ Tests of media app
 # pylint: disable=R0913, E5142, C0301
 import os
 from datetime import datetime
+import json
 from django.test import TestCase
 from django.contrib.auth.models import Group, User
 from personnel.models import UserProfile, UserAudio
@@ -65,15 +66,18 @@ class ManagerTest(TestCase):
         }
         return self.client.post('/api/manager/', data=data)
 
-    def update(self, data_id, title, content):
+    def update(self, data_id, type_id=None, title=None, content=None):
         """
         create edit request
         """
         self.client.login(username='test', password='123456')
-        data = {
-            'title': title,
-            'content': content,
-        }
+        data = dict()
+        if title is not None:
+            data['title'] = title
+        if content is not None:
+            data['content'] = content
+        if type_id is not None:
+            data['type_id'] = type_id
         return self.client.put('/api/manager/' + str(data_id) + '/',
                                data=data, content_type='application/json')
 
@@ -87,6 +91,11 @@ class ManagerTest(TestCase):
                                audio_path=audio_file,
                                video_path=video_file)
         self.assertEqual(response.status_code, 201)
+        response = self.create(title='test1', content='test 1',
+                               type_id=1,
+                               audio_path='',
+                               video_path=video_file)
+        self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
@@ -105,6 +114,12 @@ class ManagerTest(TestCase):
         data_id = OriginMedia.objects.all()[0].id
         response = self.update(data_id=data_id, title='test_edit', content='test edit')
         self.assertEqual(response.status_code, 200)
+        response = self.update(data_id=5, title='test_edit', content='test edit')
+        self.assertEqual(response.status_code, 404)
+        response = self.update(data_id=data_id, type_id=2)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OriginMedia.objects.filter(type_id=2).count(), 1)
+        self.assertEqual(OriginMedia.objects.filter(type_id=1).count(), 0)
 
     def test_search(self):
         """
@@ -122,8 +137,13 @@ class ManagerTest(TestCase):
         self.assertEqual(response.status_code, 200)
         response = self.search(name='test')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
+        response = self.search(name='st3')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 1)
         response = self.search(size=2, page=1)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
 
 
 class ClientMediaTest(TestCase):
@@ -174,10 +194,10 @@ class ClientMediaTest(TestCase):
                                    audio_path='/data/origin/audio/test3.wav',
                                    video_path='/data/origin/video/test3.mp4')
         OriginMedia.objects.create(title='test4', content='test 4',
-                                   level_id=1, type_id='2',
+                                   level_id=0, type_id='2',
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
-        response = self.video(level_id=1, type_id=2)
+        response = self.video(level_id=0, type_id=2)
         self.assertEqual(response.status_code, 200)
         response = self.video(level_id=3, type_id=2)
         self.assertEqual(response.status_code, 404)
@@ -202,8 +222,14 @@ class ClientMediaTest(TestCase):
         """
         tests for list
         """
-        response = self.client.get('/api/media/')
+        OriginMedia.objects.create(title='test1', content='test 1',
+                                   level_id=0, type_id='1',
+                                   audio_path='/data/origin/audio/test1.wav',
+                                   video_path='/data/origin/video/test1.mp4')
+        response = self.client.get('/api/media/?type_id=1')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['titles']), 1)
+        self.assertEqual(json.loads(response.content)['score'][0], 0)
 
 
 class DataAnalysisTest(TestCase):
