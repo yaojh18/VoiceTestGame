@@ -90,7 +90,6 @@ class ManagerViewSets(mixins.CreateModelMixin,
         """
         api for /api/manager/resort.
         """
-        print(request.data)
         res = self.get_serializer(data=request.data, many=True)
         if res.is_valid():
             res.save()
@@ -295,8 +294,7 @@ class UserAudioDataViewSets(viewsets.GenericViewSet,
         end_time = self.request.query_params.get('end_time', None)
         sort = self.request.query_params.get('sort', None)
         if level is not None:
-            media_id = OriginMedia.objects.get(level_id=level).id
-            queryset = queryset.filter(media=media_id)
+            queryset = queryset.filter(media__level_id=level)
         if gender is not None:
             queryset = queryset.filter(user__userprofile__gender=gender)
         if start_time is not None:
@@ -304,9 +302,9 @@ class UserAudioDataViewSets(viewsets.GenericViewSet,
             queryset = queryset.filter(timestamp__gte=start_time)
         if end_time is not None:
             end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d")
-            queryset = queryset.filter(timestamp__lte=end_time)
+            queryset = queryset.filter(timestamp__lte=end_time+datetime.timedelta(days=1))
         if sort == "score":
-            queryset = queryset.order_by('score')
+            queryset = queryset.order_by('-score')
         if sort == "level":
             queryset = queryset.order_by('media__level_id')
         if sort == "time":

@@ -73,7 +73,6 @@ class LevelListSerializer(serializers.ListSerializer):
     def validate(self, attrs):
         medias = list()
         level_ids = list()
-        print(attrs)
         for item in attrs:
             media = OriginMedia.objects.filter(id=item['id']).first()
             if media is None:

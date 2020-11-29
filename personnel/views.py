@@ -202,7 +202,7 @@ class LevelViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             if media_id is not None:
                 users = User.objects.filter(audios__media=media_id).annotate(score=Max('audios__score'))
                 if users is not None:
-                    return users.order_by('score')[:length]
+                    return users.order_by('-score')[:length]
         return User.objects.none()
 
     @action(detail=False, methods=['GET'])

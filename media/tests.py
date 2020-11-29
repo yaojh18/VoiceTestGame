@@ -4,7 +4,7 @@ Tests of media app
 # pylint: disable=R0913, E5142, C0301
 import os
 import json
-from datetime import datetime
+import datetime
 from django.test import TestCase
 from django.contrib.auth.models import Group, User
 from personnel.models import UserProfile, UserAudio
@@ -69,16 +69,18 @@ class ManagerTest(TestCase):
         response = self.client.post('/api/manager/', data=data)
         return response
 
-    def update(self, data_id, title, content, type_id):
+    def update(self, data_id, type_id=None, title=None, content=None):
         """
         create edit request
         """
         self.client.login(username='test', password='123456')
-        data = {
-            'title': title,
-            'content': content,
-            'type_id': type_id
-        }
+        data = dict()
+        if title is not None:
+            data['title'] = title
+        if content is not None:
+            data['content'] = content
+        if type_id is not None:
+            data['type_id'] = type_id
         return self.client.put('/api/manager/' + str(data_id) + '/',
                                data=data, content_type='application/json')
 
@@ -110,6 +112,11 @@ class ManagerTest(TestCase):
                                audio_path=audio_file,
                                video_path=video_file)
         self.assertEqual(response.status_code, 201)
+        response = self.create(title='test1', content='test 1',
+                               type_id=1,
+                               audio_path='',
+                               video_path=video_file)
+        self.assertEqual(response.status_code, 400)
 
         cwd = os.getcwd()
         if os.path.isfile(cwd + '/data/origin/audio/audio.txt'):
@@ -128,6 +135,12 @@ class ManagerTest(TestCase):
         data_id = OriginMedia.objects.all()[0].id
         response = self.update(data_id=data_id, title='test_edit', content='test edit', type_id=0)
         self.assertEqual(response.status_code, 200)
+        response = self.update(data_id=5, title='test_edit', content='test edit')
+        self.assertEqual(response.status_code, 404)
+        response = self.update(data_id=data_id, type_id=2)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OriginMedia.objects.filter(type_id=2).count(), 1)
+        self.assertEqual(OriginMedia.objects.filter(type_id=1).count(), 0)
 
     def test_search(self):
         """
@@ -147,8 +160,13 @@ class ManagerTest(TestCase):
         self.assertEqual(response.status_code, 200)
         response = self.search(title='test')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
+        response = self.search(title='st3')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 1)
         response = self.search(size=2, page=1)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
 
     def test_resort(self):
         """
@@ -223,10 +241,10 @@ class ClientMediaTest(TestCase):
                                    audio_path='/data/origin/audio/test3.wav',
                                    video_path='/data/origin/video/test3.mp4')
         OriginMedia.objects.create(title='test4', content='test 4',
-                                   level_id=1, type_id='2',
+                                   level_id=0, type_id='2',
                                    audio_path='/data/origin/audio/test4.wav',
                                    video_path='/data/origin/video/test4.mp4')
-        response = self.video(level_id=1, type_id=2)
+        response = self.video(level_id=0, type_id=2)
         self.assertEqual(response.status_code, 200)
         response = self.video(level_id=3, type_id=2)
         self.assertEqual(response.status_code, 404)
@@ -251,14 +269,21 @@ class ClientMediaTest(TestCase):
         """
         tests for list
         """
-        response = self.client.get('/api/media/')
+        OriginMedia.objects.create(title='test1', content='test 1',
+                                   level_id=0, type_id='1',
+                                   audio_path='/data/origin/audio/test1.wav',
+                                   video_path='/data/origin/video/test1.mp4')
+        response = self.client.get('/api/media/?type_id=1')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['titles']), 1)
+        self.assertEqual(json.loads(response.content)['score'][0], 0)
 
 
 class DataAnalysisTest(TestCase):
     """
     tests for media data analysis APIs
     """
+
     def setUp(self):
         Group.objects.create(name='manager')
         Group.objects.create(name='visitor')
@@ -322,76 +347,118 @@ class DataAnalysisTest(TestCase):
                                    video_path='/data/origin/video/test2.mp4')
         response = self.media(title='test', page=1, size=2)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
+        response = self.media(title='test1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 1)
+        self.assertEqual(json.loads(response.content)['results'][0]['title'], 'test1')
 
     def test_user(self):
         """
         tests for user data APIs
         """
+        visitor_group = Group.objects.get(name='visitor')
         user = User(username='user1', password='123456')
         user.save()
+        visitor_group.user_set.add(user)
         profile = UserProfile(user=user, openid='1', gender='0')
         profile.save()
         user = User(username='user2', password='123456')
         user.save()
+        visitor_group.user_set.add(user)
         profile = UserProfile(user=user, openid='2', gender='1')
         profile.save()
-        response = self.user(gender=0, page=1, size=2)
+        response = self.user(page=1, size=2)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
+        response = self.user(gender=0)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 1)
 
     def test_user_audio(self):
         """
         tests for user audio APIs
         """
+        visitor_group = Group.objects.get(name='visitor')
         user = User(username='user1', password='123456')
         user.save()
-        media = OriginMedia(title='test1', content='test 1', level_id=0,
-                            audio_path='/data/origin/audio/test1.wav',
-                            video_path='/data/origin/video/test1.mp4')
-        media.save()
-        audio = UserAudio(user=user, media=media, audio='/data/origin/audio/test1.wav')
+        visitor_group.user_set.add(user)
+        profile = UserProfile(user=user, openid='1', gender='0')
+        profile.save()
+        media1 = OriginMedia(title='test1', content='test 1', level_id=0,
+                             audio_path='/data/origin/audio/test1.wav',
+                             video_path='/data/origin/video/test1.mp4')
+        media1.save()
+        media2 = OriginMedia(title='test2', content='test 2', level_id=1,
+                             audio_path='/data/origin/audio/test2.wav',
+                             video_path='/data/origin/video/test2.mp4')
+        media2.save()
+        audio = UserAudio(user=user, media=media1, audio='/data/origin/audio/test1.wav', score=50)
         audio.save()
+        audio = UserAudio(user=user, media=media2, audio='/data/origin/audio/test2.wav', score=30)
+        audio.save()
+        audio = UserAudio(user=user, media=media1, audio='/data/origin/audio/test3.wav', score=70)
+        audio.save()
+        now_date = datetime.datetime.now().date().strftime("%Y-%m-%d")
+        next_date = (datetime.datetime.now().date()+datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         response = self.user_audio(level=0, gender=0, sort='score')
         self.assertEqual(response.status_code, 200)
-        response = self.user_audio(sort='level', start_time='2020-11-3')
+        self.assertEqual(len(json.loads(response.content)['results']), 2)
+        self.assertEqual(json.loads(response.content)['results'][0]['score'], 70)
+        response = self.user_audio(sort='level', start_time=now_date)
         self.assertEqual(response.status_code, 200)
-        response = self.user_audio(sort='time', end_time='2020-11-5')
+        self.assertEqual(json.loads(response.content)['results'][2]['score'], 30)
+        response = self.user_audio(sort='time', end_time=now_date)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)['results'][0]['score'], 50)
+        response = self.user_audio(sort='time', start_time=next_date)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['results']), 0)
 
 
 class ChartTest(TestCase):
     """
     Tests for chart APIs
     """
+
     def setUp(self):
         Group.objects.create(name='manager')
         Group.objects.create(name='visitor')
         User.objects.create_superuser(username='test', password='123456')
         self.client.login(username='test', password='123456')
         media1 = OriginMedia(title='test1', content='test 1', level_id=0, type_id=1,
-                                   audio_path='/data/origin/audio/test1.wav',
-                                   video_path='/data/origin/video/test1.mp4')
+                             audio_path='/data/origin/audio/test1.wav',
+                             video_path='/data/origin/video/test1.mp4')
         media1.save()
         media2 = OriginMedia(title='test2', content='test 2', level_id=0, type_id=2,
-                                   audio_path='/data/origin/audio/test2.wav',
-                                   video_path='/data/origin/video/test2.mp4')
+                             audio_path='/data/origin/audio/test2.wav',
+                             video_path='/data/origin/video/test2.mp4')
         media2.save()
         user = User(username='user1', password='123456')
         user.save()
         UserProfile.objects.create(user=user, openid='hhh', gender=1)
-        UserAudio.objects.create(user=user, media=media1, audio='/data/origin/audio/test6.wav',
-                         timestamp=datetime(2020, 11, 17, 6, 12, 6, 411666), score=86)
-        UserAudio.objects.create(user=user, media=media2, audio='/data/origin/audio/test3.wav',
-                         timestamp=datetime(2020, 11, 18, 6, 12, 6, 411666), score=40)
-        UserAudio.objects.create(user=user, media=media1, audio='/data/origin/audio/test4.wav',
-                         timestamp=datetime(2020, 11, 15, 6, 12, 6, 411666), score=97)
-        UserAudio.objects.create(user=user, media=media2, audio='/data/origin/audio/test5.wav',
-                         timestamp=datetime(2020, 11, 17, 6, 12, 6, 411666), score=79)
+        audio = UserAudio(user=user, media=media1, audio='/data/origin/audio/test6.wav', score=86)
+        audio.save()
+        audio.timestamp = datetime.datetime(2020, 11, 17, 6, 12, 6, 411666)
+        audio.save()
+        audio = UserAudio(user=user, media=media2, audio='/data/origin/audio/test3.wav', score=40)
+        audio.save()
+        audio.timestamp = datetime.datetime(2020, 11, 18, 6, 12, 6, 411666)
+        audio.save()
+        audio = UserAudio(user=user, media=media1, audio='/data/origin/audio/test4.wav', score=97)
+        audio.save()
+        audio.timestamp = datetime.datetime(2020, 11, 15, 6, 12, 6, 411666)
+        audio.save()
+        audio = UserAudio(user=user, media=media2, audio='/data/origin/audio/test5.wav', score=79)
+        audio.save()
+        audio.timestamp = datetime.datetime(2020, 11, 17, 6, 12, 6, 411666)
+        audio.save()
 
     def media_chart(self, data_id):
         """
         get data for media charts
         """
-        return self.client.get('/api/manager/data/origin/'+str(data_id)+'/chart/',
+        return self.client.get('/api/manager/data/origin/' + str(data_id) + '/chart/',
                                content_type='application/json')
 
     def user_chart(self):
@@ -414,6 +481,10 @@ class ChartTest(TestCase):
         """
         response = self.media_chart(data_id=1)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)['played_num'], 2)
+        self.assertEqual(json.loads(response.content)['male_num'], 2)
+        self.assertEqual(json.loads(response.content)['female_num'], 0)
+        self.assertEqual(json.loads(response.content)['scores'], [0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
 
     def test_user_chart(self):
         """
@@ -421,6 +492,8 @@ class ChartTest(TestCase):
         """
         response = self.user_chart()
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)['male_num'], 1)
+        self.assertEqual(json.loads(response.content)['female_num'], 0)
 
     def test_user_audio_chart(self):
         """
@@ -428,3 +501,5 @@ class ChartTest(TestCase):
         """
         response = self.user_audio_chart()
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)['time_count']['2020-11-17'], 2)
+        self.assertEqual(json.loads(response.content)['time_count']['2020-11-15'], 1)
